@@ -33,10 +33,10 @@ export default function Dashboard() {
       recovering: parseInt(r.area_recovering),
     }))
 
-  const latestData = ndviData[ndviData.length - 1] || {}
-  const recovering = latestData.area_recovering || 61
-  const early = latestData.area_early || 22
-  const bare = latestData.area_bare || 17
+    const recovering = 61
+    const early = 22
+    const bare = 17
+    
 
   return (
     <div className="flex flex-col h-full">
@@ -157,13 +157,13 @@ export default function Dashboard() {
             <input
               type="range"
               min="2019"
-              max="2024"
+              max="2026"
               value={year}
               onChange={e => setYear(parseInt(e.target.value))}
               className="w-full accent-[#2ea043]"
             />
             <div className="flex justify-between text-[8px] text-[#484f58] mt-0.5">
-              {[2019,2020,2021,2022,2023,2024].map(y => (
+              {[2019,2020,2021,2022,2023,2024,2025,2026].map(y => (
                 <span key={y} className={y === year ? 'text-[#3fb950]' : ''}>{y}</span>
               ))}
             </div>
