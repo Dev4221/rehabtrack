@@ -1,0 +1,11 @@
+zone_id,zone_name,area_ha,status,recovery_pct,ndvi_mean,trend,bond_impact,lat,lng
+A1,Northern Section,420,Recovering well,80,0.61,Improving quickly,Milestone reached,-22.35,119.25
+A2,Eastern Section,380,Recovering well,72,0.54,Improving steadily,On track,-22.38,119.55
+A3,North Eastern Section,310,Recovering well,68,0.49,Improving steadily,On track,-22.32,119.62
+B1,Central Section,290,Early stage,52,0.38,Improving steadily,On track,-22.52,119.32
+B2,Western Section,340,Early stage,44,0.31,Flat,Needs attention,-22.48,119.15
+B3,Central Western,260,Early stage,48,0.35,Improving steadily,On track,-22.55,119.22
+C1,Southern Section,220,Early stage,38,0.28,Improving steadily,On track,-22.68,119.35
+C2,South Eastern,180,Needs attention,32,0.22,Flat,Needs attention,-22.72,119.48
+C3,Southern Section,140,Needs attention,29,0.12,Declining,At risk,-22.75,119.28
+D1,Infrastructure,300,Infrastructure,0,0.05,Stable,Not applicable,-22.45,119.42

@@ -1,0 +1,26 @@
+{
+    "type": "FeatureCollection",
+    "features": [
+      {
+        "type": "Feature",
+        "properties": {
+          "name": "Roy Hill Iron Ore Mine",
+          "operator": "Roy Hill Holdings",
+          "state": "Western Australia",
+          "area_ha": 2840,
+          "bond_value": 48000000,
+          "target_year": 2027
+        },
+        "geometry": {
+          "type": "Polygon",
+          "coordinates": [[
+            [119.0, -22.9],
+            [119.8, -22.9],
+            [119.8, -22.3],
+            [119.0, -22.3],
+            [119.0, -22.9]
+          ]]
+        }
+      }
+    ]
+  }
