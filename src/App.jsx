@@ -5,6 +5,7 @@ import Alerts from './pages/Alerts'
 import AskQuestion from './pages/AskQuestion'
 import GenerateReport from './pages/GenerateReport'
 import BondCalculator from './pages/BondCalculator'
+import Compliance from './pages/Compliance'
 
 function App() {
   return (
@@ -18,6 +19,7 @@ function App() {
             <Route path="/ask" element={<AskQuestion />} />
             <Route path="/report" element={<GenerateReport />} />
             <Route path="/bond" element={<BondCalculator />} />
+            <Route path="/compliance" element={<Compliance />} />
           </Routes>
         </main>
       </div>
