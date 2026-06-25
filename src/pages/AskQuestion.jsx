@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import ReactMarkdown from 'react-markdown'
 
 const SYSTEM_PROMPT = `You are RehabTrack's AI assistant for the Roy Hill iron ore mine in Western Australia.
 
@@ -18,7 +19,8 @@ You have access to the following site data:
 You answer questions in plain English unless asked for technical details.
 Never use jargon. Always relate answers to dollars, dates, and practical actions.
 Keep answers concise — 3 to 5 sentences maximum.
-Always cite which zones or data you are referring to.`
+Always cite which zones or data you are referring to.
+Do not use markdown bold or asterisks in your answers. Write in plain sentences only.`
 
 const suggestedQuestions = [
   'Will we get the bond money back on time?',
@@ -58,8 +60,8 @@ export default function AskQuestion() {
 
     try {
       const systemPrompt = view === 'executive'
-        ? SYSTEM_PROMPT + '\n\nIMPORTANT: Always answer in plain English. No technical terms, no NDVI scores, no statistical language. Speak as if explaining to a mining executive who is not a scientist.'
-        : SYSTEM_PROMPT + '\n\nIMPORTANT: Include technical details — NDVI values, Z-scores, classifier confidence levels, spectral indices where relevant.'
+        ? SYSTEM_PROMPT + '\n\nIMPORTANT: Always answer in plain English. No technical terms, no NDVI scores, no statistical language. No markdown, no asterisks, no bold text. Speak as if explaining to a mining executive who is not a scientist.'
+        : SYSTEM_PROMPT + '\n\nIMPORTANT: Include technical details — NDVI values, Z-scores, classifier confidence levels, spectral indices where relevant. No markdown formatting.'
 
       const response = await fetch(apiUrl, {
         method: 'POST',
