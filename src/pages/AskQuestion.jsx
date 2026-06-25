@@ -13,42 +13,48 @@ You have access to the following site data:
 
 Roy Hill specific data:
 - 61% of the 2,840 hectare disturbed area is recovering well (NDVI > 0.35)
-- 22% is in early stage recovery - 17% needs attention
+- 22% is in early stage recovery, 17% needs attention
 - Annual recovery rate: +8.2% per year (target is 6%)
-- Bond value: $48,000,000 - Projected bond release: Q3 2027
-- Zone C3 (14ha): vegetation loss detected 2 days ago - likely rainfall erosion
+- Bond value: $48,000,000, projected bond release: Q3 2027
+- Zone C3 (14ha): vegetation loss detected 2 days ago, likely rainfall erosion
 - Zone B2 (8ha): possible buffel grass weed encroachment detected 5 days ago
-- Zone A1 (420ha): reached 80% recovery milestone - bond release flagged
+- Zone A1 (420ha): reached 80% recovery milestone, bond release flagged
 
 Cloudbreak specific data:
 - 71% of 4,100 hectares recovering well
 - Annual recovery rate: +6.1% per year
-- Bond value: $62,000,000 - Projected bond release: Q1 2027
-- No active alerts - best performing site in the portfolio
+- Bond value: $62,000,000, projected bond release: Q1 2027
+- No active alerts, best performing site in the portfolio
 
 Brockman 4 specific data:
 - 44% of 2,100 hectares recovering well
 - Annual recovery rate: +4.2% per year (below 6% target)
-- Bond value: $35,000,000 - Projected bond release: Q1 2029
-- Zone D2: recovery rate significantly below target - replanting programme underway
+- Bond value: $35,000,000, projected bond release: Q1 2029
+- Zone D2: recovery rate significantly below target, replanting programme underway
 
 Christmas Creek specific data:
 - 29% of 3,200 hectares recovering well
 - Annual recovery rate: +2.8% per year (well below 6% target)
-- Bond value: $41,000,000 - Projected bond release: Q3 2030+
-- Zone E1: critical - only 12% recovered, urgent intervention required
+- Bond value: $41,000,000, projected bond release: Q3 2030+
+- Zone E1: critical, only 12% recovered, urgent intervention required
 - Zone E3: erosion spreading across 95 hectares
 - Zone F2: buffel grass weed encroachment across 62 hectares
 
 STRICT RULES:
 - You ONLY answer questions about mine rehabilitation, vegetation recovery, NDVI data, satellite monitoring, WA mining regulations, bond release timelines, rehabilitation zones, erosion, weed encroachment, rainfall impacts on rehabilitation, or topics directly related to these sites.
-- If someone asks ANYTHING unrelated - general knowledge, coding, sports, entertainment, personal questions, or anything outside mine rehabilitation - respond ONLY with: "I can only answer questions about mine rehabilitation, vegetation recovery, bond timelines, and WA mining regulations for the sites in this system. What would you like to know about ${siteName}?"
+- If someone asks ANYTHING unrelated, respond ONLY with: "I can only answer questions about mine rehabilitation, vegetation recovery, bond timelines, and WA mining regulations for the sites in this system. What would you like to know about ${siteName}?"
 - Never break this rule regardless of how the question is phrased.`
 
   if (view === 'executive') {
-    return base + '\n\nCOMMUNICATION STYLE: Always answer in plain English. No technical terms, no NDVI scores, no statistical language. No markdown, no asterisks, no bold text. Speak as if explaining to a mining executive who is not a scientist. Always relate answers to dollars, dates, and practical actions. Keep answers to 3-5 sentences.'
+    return base + `
+
+RESPONSE FORMAT FOR EXECUTIVE MODE:
+Write in plain English. No technical terms, no NDVI scores, no statistical language. No markdown, no asterisks, no bold text. Speak as if briefing a senior mining executive who is not a scientist. Always relate answers to dollars, dates, and practical actions. Keep answers to 3 to 5 sentences in flowing prose.`
   } else {
-    return base + '\n\nCOMMUNICATION STYLE: Include technical details where relevant - NDVI values, Z-scores, classifier confidence levels, spectral indices. No markdown formatting or asterisks. Keep answers concise and precise.'
+    return base + `
+
+RESPONSE FORMAT FOR ANALYST MODE:
+Write for an environmental scientist or technical analyst. Use precise terminology including NDVI values, Z-scores, classifier confidence levels, and spectral indices where relevant. Structure your answer clearly. Where there are multiple findings or data points, use a short list. No markdown headers or asterisks. Keep answers concise and data-driven.`
   }
 }
 
@@ -106,11 +112,12 @@ const apiUrl = import.meta.env.DEV
 export default function AskQuestion() {
   const { selectedSite } = useSite()
   const [messages, setMessages] = useState([])
-  const [input, setInput] = useState('') 
+  const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
   const [view, setView] = useState('executive')
 
   const suggestedQuestions = siteQuestions[selectedSite.id] || siteQuestions['roy-hill']
+  const isAnalyst = view === 'analyst'
 
   const sendMessage = async (question) => {
     const userMessage = question || input
@@ -149,16 +156,42 @@ export default function AskQuestion() {
     setLoading(false)
   }
 
+  const clearConversation = () => {
+    setMessages([])
+    setInput('')
+  }
+
   return (
     <div className="flex h-full">
       <div className="flex-1 flex flex-col">
         <div className="h-10 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between px-4 flex-shrink-0">
-          <div className="text-[10px] text-[#8b949e]">
-            Ask a question <span className="text-[8px] ml-2 px-1.5 py-0.5 rounded bg-[#1a3a1a] text-[#3fb950]">Claude AI</span>
+          <div className="flex items-center gap-2">
+            <div className="text-[10px] text-[#8b949e]">
+              Ask a question
+            </div>
+            <span className="text-[8px] px-1.5 py-0.5 rounded bg-[#1a3a1a] text-[#3fb950]">Claude AI</span>
+            {messages.length > 0 && (
+              <button
+                onClick={clearConversation}
+                className="text-[8px] text-[#484f58] hover:text-[#f85149] transition-colors ml-1"
+              >
+                Clear conversation
+              </button>
+            )}
           </div>
           <div className="bg-[#21262d] border border-[#30363d] rounded-full p-0.5 flex gap-0.5">
-            <button onClick={() => setView('executive')} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${view === 'executive' ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}>Plain English</button>
-            <button onClick={() => setView('technical')} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${view === 'technical' ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}>Technical</button>
+            <button
+              onClick={() => setView('executive')}
+              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${!isAnalyst ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
+            >
+              Executive
+            </button>
+            <button
+              onClick={() => setView('analyst')}
+              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${isAnalyst ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
+            >
+              Analyst
+            </button>
           </div>
         </div>
 
@@ -168,7 +201,10 @@ export default function AskQuestion() {
               <div className="text-[32px] mb-3">◎</div>
               <div className="text-[13px] font-medium text-[#e6edf3] mb-2">Ask anything about {selectedSite.name}</div>
               <div className="text-[10px] text-[#8b949e] max-w-sm">
-                Ask in plain English - about the bond timeline, specific zones, regulations, or how the site is performing. Answers are grounded in real satellite data and WA mining regulations.
+                {isAnalyst
+                  ? 'Analyst mode returns structured technical responses with NDVI values, Z-scores, and zone-level data.'
+                  : 'Executive mode returns plain-English answers grounded in real satellite data and WA mining regulations.'
+                }
               </div>
             </div>
           )}
@@ -183,7 +219,7 @@ export default function AskQuestion() {
                 {msg.content}
                 {msg.role === 'assistant' && (
                   <div className="text-[8px] text-[#484f58] mt-1">
-                    Sources: satellite data 2019-2026 - WA Mining Act - DMIRS guidelines
+                    Sources: satellite data 2019-2026 | WA Mining Act | DMIRS guidelines
                   </div>
                 )}
               </div>
@@ -233,7 +269,9 @@ export default function AskQuestion() {
         </div>
 
         <div>
-          <div className="text-[10px] font-medium text-[#e6edf3] mb-1">Questions people ask</div>
+          <div className="text-[10px] font-medium text-[#e6edf3] mb-1">
+            {isAnalyst ? 'Technical queries' : 'Questions people ask'}
+          </div>
           <div className="flex flex-col gap-1.5">
             {suggestedQuestions.map((q, i) => (
               <button
@@ -248,7 +286,10 @@ export default function AskQuestion() {
         </div>
 
         <div className="text-[8px] text-[#484f58] leading-relaxed mt-auto">
-          This AI only answers questions about mine rehabilitation and WA mining regulations. Answers are not a substitute for professional environmental advice.
+          {isAnalyst
+            ? 'Analyst mode returns NDVI values, Z-scores, and technical zone data. Not a substitute for formal environmental assessment.'
+            : 'This AI only answers questions about mine rehabilitation and WA mining regulations. Not a substitute for professional environmental advice.'
+          }
         </div>
       </div>
     </div>

@@ -60,7 +60,9 @@ export default function Dashboard() {
     : 'This site is at risk of missing its bond release target'
   const statusSub = selectedSite.status === 'on-track'
     ? `${recovering}% of the disturbed land is showing strong vegetation recovery.`
-    : `${recovering}% recovered - below the required pace. Action needed to stay on schedule.`
+    : `${recovering}% recovered, below the required pace. Action needed to stay on schedule.`
+
+  const isAnalyst = view === 'analyst'
 
   return (
     <div className="flex flex-col h-full">
@@ -71,8 +73,18 @@ export default function Dashboard() {
         </div>
         <div className="flex items-center gap-2">
           <div className="bg-[#21262d] border border-[#30363d] rounded-full p-0.5 flex gap-0.5">
-            <button onClick={() => setView('executive')} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${view === 'executive' ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}>Plain English</button>
-            <button onClick={() => setView('technical')} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${view === 'technical' ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}>Technical</button>
+            <button
+              onClick={() => setView('executive')}
+              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${!isAnalyst ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
+            >
+              Executive
+            </button>
+            <button
+              onClick={() => setView('analyst')}
+              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${isAnalyst ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
+            >
+              Analyst
+            </button>
           </div>
           <div className={`flex items-center gap-1 bg-[#1c2128] border rounded px-2 py-1 text-[9px] ${selectedSite.alerts > 0 ? 'border-[#3d0000] text-[#f85149]' : 'border-[#30363d] text-[#484f58]'}`}>
             <div className={`w-1.5 h-1.5 rounded-full ${selectedSite.alerts > 0 ? 'bg-[#f85149]' : 'bg-[#484f58]'}`}></div>
@@ -82,7 +94,7 @@ export default function Dashboard() {
             onClick={() => navigate('/report')}
             className="bg-[#1a3a1a] border border-[#2ea043] rounded px-2 py-1 text-[9px] text-[#3fb950]"
           >
-            Download report
+            Generate report
           </button>
         </div>
       </div>
@@ -90,16 +102,20 @@ export default function Dashboard() {
       <div className={`mx-4 mt-4 ${statusBg} border ${statusBorder} rounded-lg px-4 py-3 flex items-center justify-between flex-shrink-0`}>
         <div>
           <div className={`text-[12px] font-medium ${statusColor}`}>
-            {view === 'executive' ? statusText : `Site NDVI: ${(0.41 + offset).toFixed(2)} mean - Growth rate: +${selectedSite.growthRate}%/yr - Z-score baseline: 2019`}
+            {isAnalyst
+              ? `NDVI mean: ${(0.41 + offset).toFixed(2)} | Growth rate: +${selectedSite.growthRate}%/yr | Z-score baseline: 2019`
+              : statusText}
           </div>
           <div className="text-[10px] text-[#68d391] mt-1">
-            {view === 'executive' ? statusSub : `Random Forest classifier: ${recovering}% rehabilitating - ${early}% early regrowth - ${bare}% bare. Sentinel-2 10m resolution.`}
+            {isAnalyst
+              ? `Random Forest classifier: ${recovering}% rehabilitating | ${early}% early regrowth | ${bare}% bare | Sentinel-2 10m resolution`
+              : statusSub}
           </div>
         </div>
         <div className="text-right flex-shrink-0 ml-4">
           <div className="text-[9px] text-[#68d391]">Bond lodged with government</div>
           <div className={`text-xl font-medium ${statusColor}`}>${(selectedSite.bond / 1000000).toFixed(0)},000,000</div>
-          <div className="text-[9px] text-[#68d391]">{selectedSite.release} - {selectedSite.operator}</div>
+          <div className="text-[9px] text-[#68d391]">{selectedSite.release} | {selectedSite.operator}</div>
         </div>
       </div>
 
@@ -107,39 +123,39 @@ export default function Dashboard() {
         {[
           {
             exec: 'How much land is recovering?',
-            tech: 'Rehabilitated area',
+            anal: 'Rehabilitated area',
             value: `${recovering}%`,
-            sub: view === 'executive' ? 'of the disturbed area' : 'NDVI > 0.35 threshold',
+            sub: isAnalyst ? 'NDVI > 0.35 threshold' : 'of the disturbed area',
             trend: selectedSite.status === 'on-track' ? 'Ahead of schedule' : selectedSite.status === 'slow' ? 'Behind schedule' : 'Significantly behind',
             trendColor: statusColor,
           },
           {
             exec: 'How fast is it growing?',
-            tech: 'Annual NDVI velocity',
+            anal: 'Annual NDVI velocity',
             value: `+${selectedSite.growthRate}%`,
-            sub: view === 'executive' ? 'per year' : 'slope of linear regression',
-            trend: `Target is 6% - ${selectedSite.growthRate >= 6 ? 'ahead of' : 'below'} schedule`,
+            sub: isAnalyst ? 'Slope of linear regression' : 'per year',
+            trend: `Target is 6% | ${selectedSite.growthRate >= 6 ? 'ahead of' : 'below'} schedule`,
             trendColor: selectedSite.growthRate >= 6 ? 'text-[#3fb950]' : 'text-[#f85149]',
           },
           {
             exec: 'Total area monitored',
-            tech: 'Disturbed area (ha)',
+            anal: 'Disturbed area (ha)',
             value: selectedSite.area.toLocaleString(),
-            sub: view === 'executive' ? 'hectares' : 'hectares in rehabilitation',
+            sub: isAnalyst ? 'Hectares in rehabilitation' : 'hectares',
             trend: selectedSite.region,
             trendColor: 'text-[#484f58]',
           },
           {
             exec: 'Last satellite check',
-            tech: 'Last Sentinel-2 pass',
+            anal: 'Last Sentinel-2 pass',
             value: '5 days',
-            sub: view === 'executive' ? 'ago' : 'Sentinel-2 - Band 8 / Band 4',
+            sub: isAnalyst ? 'Sentinel-2 | Band 8 / Band 4' : 'ago',
             trend: 'Next check in 2 days',
             trendColor: 'text-[#484f58]',
           },
         ].map((card, i) => (
           <div key={i} className="bg-[#161b22] border border-[#30363d] rounded-lg p-3">
-            <div className="text-[9px] text-[#484f58] mb-1">{view === 'executive' ? card.exec : card.tech}</div>
+            <div className="text-[9px] text-[#484f58] mb-1">{isAnalyst ? card.anal : card.exec}</div>
             <div className="text-xl font-medium text-[#e6edf3]">{card.value}</div>
             <div className="text-[9px] text-[#8b949e] mt-0.5">{card.sub}</div>
             <div className={`text-[9px] mt-1 ${card.trendColor}`}>{card.trend}</div>
@@ -151,7 +167,9 @@ export default function Dashboard() {
 
         <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-3 flex flex-col">
           <div className="flex items-center justify-between mb-2 flex-shrink-0">
-            <div className="text-[11px] font-medium text-[#e6edf3]">{view === 'executive' ? 'Vegetation recovery over time' : 'NDVI time-series'}</div>
+            <div className="text-[11px] font-medium text-[#e6edf3]">
+              {isAnalyst ? 'NDVI time-series' : 'Vegetation recovery over time'}
+            </div>
             <div className="text-[9px] text-[#484f58]">{year}</div>
           </div>
           <div className="mb-2 flex-shrink-0">
@@ -173,7 +191,7 @@ export default function Dashboard() {
                 <YAxis tick={{ fontSize: 8, fill: '#484f58' }} domain={[0, 1]} />
                 <Tooltip
                   contentStyle={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 4, fontSize: 10 }}
-                  formatter={(val) => [val.toFixed(2), view === 'executive' ? 'Recovery score' : 'NDVI']}
+                  formatter={(val) => [val.toFixed(2), isAnalyst ? 'NDVI' : 'Recovery score']}
                 />
                 <Bar dataKey="ndvi" fill="#2ea043" radius={[2,2,0,0]} />
               </BarChart>
@@ -181,9 +199,9 @@ export default function Dashboard() {
           </div>
           <div className="mt-2 pt-2 border-t border-[#30363d] flex-shrink-0">
             {[
-              { label: view === 'executive' ? 'Recovering well' : 'Rehabilitating (NDVI>0.35)', pct: recovering, color: '#2ea043' },
-              { label: view === 'executive' ? 'Early stage' : 'Early regrowth (NDVI 0.15-0.35)', pct: early, color: '#d29922' },
-              { label: view === 'executive' ? 'Needs attention' : 'Bare/disturbed (NDVI<0.15)', pct: bare, color: '#cf222e' },
+              { label: isAnalyst ? 'Rehabilitating (NDVI > 0.35)' : 'Recovering well', pct: recovering, color: '#2ea043' },
+              { label: isAnalyst ? 'Early regrowth (NDVI 0.15 to 0.35)' : 'Early stage', pct: early, color: '#d29922' },
+              { label: isAnalyst ? 'Bare or disturbed (NDVI < 0.15)' : 'Needs attention', pct: bare, color: '#cf222e' },
             ].map((row, i) => (
               <div key={i} className="mb-1.5">
                 <div className="flex justify-between text-[8px] mb-0.5">
@@ -209,10 +227,10 @@ export default function Dashboard() {
             </div>
             <div className="bg-[#1a2d1a] border border-[#2a4a2a] rounded px-2 py-1.5 text-[9px] text-[#b8e6b8] leading-relaxed max-w-[92%]">
               {selectedSite.status === 'on-track'
-                ? `Yes - ${selectedSite.name} is on track. At +${selectedSite.growthRate}%/yr, the site will meet the government's requirements by ${selectedSite.release} and the full $${(selectedSite.bond/1000000).toFixed(0)}M will be returned.`
+                ? `Yes. ${selectedSite.name} is on track. At +${selectedSite.growthRate}%/yr, the site will meet the government's requirements by ${selectedSite.release} and the full $${(selectedSite.bond/1000000).toFixed(0)}M will be returned.`
                 : selectedSite.status === 'slow'
-                ? `At risk - ${selectedSite.name} is recovering at +${selectedSite.growthRate}%/yr, below the 6% annual target. Bond release is expected ${selectedSite.release}, later than planned.`
-                : `Significant risk - ${selectedSite.name} is recovering at only +${selectedSite.growthRate}%/yr, well below the 6% target. Bond release is projected ${selectedSite.release} without urgent intervention.`
+                ? `At risk. ${selectedSite.name} is recovering at +${selectedSite.growthRate}%/yr, below the 6% annual target. Bond release is expected ${selectedSite.release}, later than planned.`
+                : `Significant risk. ${selectedSite.name} is recovering at only +${selectedSite.growthRate}%/yr, well below the 6% target. Bond release is projected ${selectedSite.release} without urgent intervention.`
               }
             </div>
           </div>
@@ -235,11 +253,13 @@ export default function Dashboard() {
         <div className="flex flex-col gap-3">
           <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-3 flex-1">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-[11px] font-medium text-[#e6edf3]">{view === 'executive' ? 'Issues needing attention' : 'AI anomaly alerts'}</div>
+              <div className="text-[11px] font-medium text-[#e6edf3]">
+                {isAnalyst ? 'AI anomaly alerts' : 'Issues needing attention'}
+              </div>
               <span className="text-[8px] px-1.5 py-0.5 rounded bg-[#1a3a1a] text-[#3fb950]">live</span>
             </div>
             {selectedSite.alerts === 0 ? (
-              <div className="text-[9px] text-[#484f58] py-4 text-center">No open alerts - all areas recovering as expected</div>
+              <div className="text-[9px] text-[#484f58] py-4 text-center">No open alerts. All areas recovering as expected.</div>
             ) : (
               <>
                 <div className="flex gap-2 py-1.5 border-b border-[#30363d] items-start">
@@ -249,11 +269,11 @@ export default function Dashboard() {
                       {selectedSite.id === 'christmas-creek' ? 'Zone E1 - critical vegetation loss (240ha)' : 'Zone C3 - vegetation loss (14ha)'}
                     </div>
                     <div className="text-[8px] text-[#8b949e] mt-0.5">
-                      {view === 'executive'
-                        ? selectedSite.id === 'christmas-creek' ? 'Critical - only 12% recovered. Urgent intervention required.' : 'Likely rainfall damage. Should recover in 4 months.'
-                        : selectedSite.id === 'christmas-creek' ? 'NDVI mean 0.08. Annual velocity +1.2%/yr. Z-score: -3.4.' : 'NDVI=0.12 (baseline 0.30, z=-2.8) - confidence 91%'}
+                      {isAnalyst
+                        ? selectedSite.id === 'christmas-creek' ? 'NDVI mean 0.08. Annual velocity +1.2%/yr. Z-score: -3.4.' : 'NDVI=0.12 (baseline 0.30, z=-2.8). Confidence 91%.'
+                        : selectedSite.id === 'christmas-creek' ? 'Critical. Only 12% recovered. Urgent intervention required.' : 'Likely rainfall damage. Should recover in 4 months.'}
                     </div>
-                    <div className="text-[8px] text-[#484f58] mt-0.5">2 days ago - monitor weekly</div>
+                    <div className="text-[8px] text-[#484f58] mt-0.5">2 days ago | monitor weekly</div>
                   </div>
                 </div>
                 {selectedSite.alerts >= 2 && (
@@ -264,11 +284,11 @@ export default function Dashboard() {
                         {selectedSite.id === 'christmas-creek' ? 'Zone E3 - erosion spreading (95ha)' : 'Zone B2 - possible weed growth (8ha)'}
                       </div>
                       <div className="text-[8px] text-[#8b949e] mt-0.5">
-                        {view === 'executive'
-                          ? selectedSite.id === 'christmas-creek' ? 'Erosion spreading beyond original area. Erosion control works needed urgently.' : 'May be buffel grass. Reportable if confirmed.'
-                          : selectedSite.id === 'christmas-creek' ? 'NDVI dropped from 0.22 to 0.09 over 45 days. Spatial spread: 40ha to 95ha.' : 'Spectral anomaly vs native regrowth - confidence 78%'}
+                        {isAnalyst
+                          ? selectedSite.id === 'christmas-creek' ? 'NDVI dropped from 0.22 to 0.09 over 45 days. Spatial spread: 40ha to 95ha.' : 'Spectral anomaly vs native regrowth. Confidence 78%.'
+                          : selectedSite.id === 'christmas-creek' ? 'Erosion spreading beyond original area. Control works needed urgently.' : 'May be buffel grass. Reportable if confirmed.'}
                       </div>
-                      <div className="text-[8px] text-[#484f58] mt-0.5">4 days ago - action required</div>
+                      <div className="text-[8px] text-[#484f58] mt-0.5">4 days ago | action required</div>
                     </div>
                   </div>
                 )}
@@ -278,9 +298,9 @@ export default function Dashboard() {
                     <div>
                       <div className="text-[9px] text-[#e6edf3] font-medium">Zone F2 - weed encroachment (62ha)</div>
                       <div className="text-[8px] text-[#8b949e] mt-0.5">
-                        {view === 'executive' ? 'Buffel grass spreading from haul road boundary. Reportable event.' : 'Spectral match 83% Cenchrus ciliaris. Reportable under MCP s.4.2.'}
+                        {isAnalyst ? 'Spectral match 83% Cenchrus ciliaris. Reportable under MCP s.4.2.' : 'Buffel grass spreading from haul road boundary. Reportable event.'}
                       </div>
-                      <div className="text-[8px] text-[#484f58] mt-0.5">6 days ago - treatment required</div>
+                      <div className="text-[8px] text-[#484f58] mt-0.5">6 days ago | treatment required</div>
                     </div>
                   </div>
                 )}
@@ -292,7 +312,7 @@ export default function Dashboard() {
             <div className="text-[11px] font-medium text-[#e6edf3] mb-2">Bond forecast</div>
             {[
               { label: 'Bond lodged with government', value: `$${(selectedSite.bond/1000000).toFixed(0)},000,000` },
-              { label: view === 'executive' ? 'Annual recovery rate' : 'NDVI velocity (linear regression)', value: `+${selectedSite.growthRate}% / yr` },
+              { label: isAnalyst ? 'NDVI velocity (linear regression)' : 'Annual recovery rate', value: `+${selectedSite.growthRate}% / yr` },
               { label: 'Expected release', value: selectedSite.release, valueColor: statusColor },
               { label: 'Capital to be returned', value: `$${(selectedSite.bond/1000000).toFixed(0)}M`, valueColor: statusColor, big: true },
             ].map((row, i) => (

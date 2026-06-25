@@ -51,25 +51,142 @@ const zoneColors = {
 
 const siteEvents = {
   'roy-hill': [
-    { date: 'Mar 2021', color: 'border-[#f85149] bg-[#3d0000]', title: 'Cyclone Ellie rainfall event', exec: '340mm of rain in 48 hours caused surface erosion. Vegetation recovered within 4 months.', tech: 'NDVI dropped to 0.22 (from baseline 0.38). Z-score: -3.1. Recovery observed within 4 months.' },
-    { date: 'Jun 2024', color: 'border-[#f85149] bg-[#3d0000]', title: 'Zone C3 vegetation loss', exec: 'Heavy rainfall caused vegetation loss across 14 hectares. Currently recovering.', tech: 'NDVI=0.12 in Zone C3 (baseline 0.30). Z-score: -2.8. Classifier: bare/disturbed. Confidence 91%.' },
-    { date: 'Jun 2026', color: 'border-[#2ea043] bg-[#1a3a1a]', title: 'Zone A1 milestone reached', exec: "Zone A1 reached 80% recovery - the government's threshold for bond release.", tech: 'Zone A1 NDVI mean 0.61 sustained above 0.35 for 3 consecutive months. Bond milestone confirmed.' },
-    { date: 'Jun 2026', color: 'border-[#e3b341] bg-[#2d2000]', title: 'Zone B2 weed signature', exec: 'Possible buffel grass detected in Zone B2. Ground inspection recommended.', tech: 'Spectral anomaly detected. Band ratio inconsistent with native Pilbara regrowth. Possible Cenchrus ciliaris.' },
+    {
+      date: 'Mar 2021', color: 'border-[#f85149] bg-[#3d0000]',
+      title: 'Cyclone Ellie rainfall event',
+      exec: '340mm of rain in 48 hours caused surface erosion. Vegetation recovered within 4 months.',
+      tech: [
+        'NDVI dropped from 0.38 to 0.22 site-wide',
+        'Z-score: -3.1 from seasonal baseline',
+        'Recovery to baseline observed within 4 months',
+      ],
+    },
+    {
+      date: 'Jun 2024', color: 'border-[#f85149] bg-[#3d0000]',
+      title: 'Zone C3 vegetation loss',
+      exec: 'Heavy rainfall caused vegetation loss across 14 hectares. Currently recovering.',
+      tech: [
+        'Zone C3 NDVI: 0.12 (baseline 0.30)',
+        'Z-score: -2.8',
+        'Classifier: bare/disturbed (confidence 91%)',
+      ],
+    },
+    {
+      date: 'Jun 2026', color: 'border-[#2ea043] bg-[#1a3a1a]',
+      title: 'Zone A1 milestone reached',
+      exec: "Zone A1 reached 80% recovery, the government's threshold for bond release.",
+      tech: [
+        'Zone A1 NDVI mean: 0.61',
+        'Sustained above 0.35 threshold for 3 consecutive months',
+        'Bond milestone confirmed by DMIRS',
+      ],
+    },
+    {
+      date: 'Jun 2026', color: 'border-[#e3b341] bg-[#2d2000]',
+      title: 'Zone B2 weed signature',
+      exec: 'Possible buffel grass detected in Zone B2. Ground inspection recommended.',
+      tech: [
+        'Band ratio anomaly detected',
+        'Inconsistent with native Pilbara regrowth',
+        'Possible Cenchrus ciliaris (confidence 78%)',
+      ],
+    },
   ],
   'cloudbreak': [
-    { date: 'Feb 2020', color: 'border-[#f85149] bg-[#3d0000]', title: 'Heavy rainfall erosion event', exec: 'Significant rainfall event caused surface erosion across 3 zones. Recovery was faster than expected.', tech: 'NDVI dropped from 0.48 to 0.31 site-wide. Recovery to baseline within 3 months.' },
-    { date: 'Mar 2026', color: 'border-[#2ea043] bg-[#1a3a1a]', title: 'Zone A1 milestone reached', exec: "Zone A1 reached 82% recovery - ahead of the government's threshold.", tech: 'Zone A1 NDVI mean 0.64 sustained above 0.35 for 4 consecutive months. Bond milestone confirmed.' },
-    { date: 'Jun 2026', color: 'border-[#2ea043] bg-[#1a3a1a]', title: 'Ahead of bond release schedule', exec: 'Cloudbreak is the best performing site in the portfolio - on track for Q1 2027 bond release.', tech: 'Site NDVI velocity +6.1%/yr. All zones above 0.35 threshold except C1. Projected release Q1 2027.' },
+    {
+      date: 'Feb 2020', color: 'border-[#f85149] bg-[#3d0000]',
+      title: 'Heavy rainfall erosion event',
+      exec: 'Significant rainfall event caused surface erosion across 3 zones. Recovery was faster than expected.',
+      tech: [
+        'Site-wide NDVI dropped from 0.48 to 0.31',
+        'Recovery to baseline within 3 months',
+        'No lasting impact on bond release trajectory',
+      ],
+    },
+    {
+      date: 'Mar 2026', color: 'border-[#2ea043] bg-[#1a3a1a]',
+      title: 'Zone A1 milestone reached',
+      exec: "Zone A1 reached 82% recovery, ahead of the government's threshold.",
+      tech: [
+        'Zone A1 NDVI mean: 0.64',
+        'Sustained above 0.35 threshold for 4 consecutive months',
+        'Bond milestone confirmed',
+      ],
+    },
+    {
+      date: 'Jun 2026', color: 'border-[#2ea043] bg-[#1a3a1a]',
+      title: 'Ahead of bond release schedule',
+      exec: 'Cloudbreak is the best performing site in the portfolio, on track for Q1 2027 bond release.',
+      tech: [
+        'Site NDVI velocity: +6.1%/yr',
+        'All zones above 0.35 threshold except Zone C1',
+        'Projected release: Q1 2027',
+      ],
+    },
   ],
   'brockman': [
-    { date: 'Jan 2021', color: 'border-[#f85149] bg-[#3d0000]', title: 'Slow recovery identified in Zone D2', exec: 'Zone D2 was identified as significantly underperforming. Recovery rate is less than half the required pace.', tech: 'Zone D2 NDVI velocity +2.1%/yr vs site average +4.2%/yr. Projected milestone Q3 2031.' },
-    { date: 'Aug 2023', color: 'border-[#e3b341] bg-[#2d2000]', title: 'Replanting programme initiated', exec: 'A targeted replanting programme was started in Zone D2 to accelerate recovery. Results expected by 2025.', tech: 'Native seed mix applied across 120ha of Zone D2. Monitoring frequency increased to weekly.' },
-    { date: 'Jun 2026', color: 'border-[#e3b341] bg-[#2d2000]', title: 'Behind schedule - Q1 2029 release at risk', exec: 'Brockman 4 is recovering below the required annual target. Bond release may be delayed without intervention.', tech: 'Site NDVI velocity +4.2%/yr vs 6% target. Zone D2 remains critical at +2.1%/yr.' },
+    {
+      date: 'Jan 2021', color: 'border-[#f85149] bg-[#3d0000]',
+      title: 'Slow recovery identified in Zone D2',
+      exec: 'Zone D2 was identified as significantly underperforming. Recovery rate is less than half the required pace.',
+      tech: [
+        'Zone D2 NDVI velocity: +2.1%/yr vs site average +4.2%/yr',
+        'Projected milestone: Q3 2031',
+        'Flagged for intervention planning',
+      ],
+    },
+    {
+      date: 'Aug 2023', color: 'border-[#e3b341] bg-[#2d2000]',
+      title: 'Replanting programme initiated',
+      exec: 'A targeted replanting programme was started in Zone D2 to accelerate recovery. Results expected by 2025.',
+      tech: [
+        'Native seed mix applied across 120ha of Zone D2',
+        'Monitoring frequency increased to weekly',
+        'Survival rate tracking underway',
+      ],
+    },
+    {
+      date: 'Jun 2026', color: 'border-[#e3b341] bg-[#2d2000]',
+      title: 'Behind schedule, Q1 2029 release at risk',
+      exec: 'Brockman 4 is recovering below the required annual target. Bond release may be delayed without intervention.',
+      tech: [
+        'Site NDVI velocity: +4.2%/yr vs 6% target',
+        'Zone D2 remains critical at +2.1%/yr',
+        'Projected release: Q1 2029 to Q1 2031 depending on Zone D2 outcomes',
+      ],
+    },
   ],
   'christmas-creek': [
-    { date: 'Mar 2022', color: 'border-[#f85149] bg-[#3d0000]', title: 'Major erosion event - Zone E3', exec: 'A severe rainfall event caused widespread erosion across 40 hectares in Zone E3. The damage has since spread to 95 hectares.', tech: 'NDVI dropped from 0.28 to 0.11 in Zone E3. Rill erosion pattern confirmed via satellite. Area now 95ha.' },
-    { date: 'Nov 2023', color: 'border-[#f85149] bg-[#3d0000]', title: 'Zone E1 critical status confirmed', exec: 'Zone E1 was formally classified as critical after 3 consecutive years of minimal recovery. Urgent intervention required.', tech: 'Zone E1 NDVI mean 0.08 - below early regrowth threshold. Annual velocity: +1.2%/yr. Projected milestone 2035+.' },
-    { date: 'Jun 2026', color: 'border-[#f85149] bg-[#3d0000]', title: 'Bond release significantly at risk', exec: 'Christmas Creek is the worst performing site in the portfolio. At current pace, the $41M bond will not be released until 2030 at the earliest.', tech: 'Site NDVI velocity +2.8%/yr. 3 zones below threshold. Projected release Q3 2030+.' },
+    {
+      date: 'Mar 2022', color: 'border-[#f85149] bg-[#3d0000]',
+      title: 'Major erosion event in Zone E3',
+      exec: 'A severe rainfall event caused widespread erosion across 40 hectares in Zone E3. The damage has since spread to 95 hectares.',
+      tech: [
+        'Zone E3 NDVI: 0.28 to 0.11',
+        'Rill erosion pattern confirmed via satellite',
+        'Affected area spread from 40ha to 95ha',
+      ],
+    },
+    {
+      date: 'Nov 2023', color: 'border-[#f85149] bg-[#3d0000]',
+      title: 'Zone E1 critical status confirmed',
+      exec: 'Zone E1 was formally classified as critical after 3 consecutive years of minimal recovery. Urgent intervention required.',
+      tech: [
+        'Zone E1 NDVI mean: 0.08, below 0.15 early regrowth threshold',
+        'Annual velocity: +1.2%/yr',
+        'Projected milestone: 2035+',
+      ],
+    },
+    {
+      date: 'Jun 2026', color: 'border-[#f85149] bg-[#3d0000]',
+      title: 'Bond release significantly at risk',
+      exec: 'Christmas Creek is the worst performing site in the portfolio. At the current pace, the $41M bond will not be released until 2030 at the earliest.',
+      tech: [
+        'Site NDVI velocity: +2.8%/yr',
+        '3 zones below recovery threshold',
+        'Projected release: Q3 2030+',
+      ],
+    },
   ],
 }
 
@@ -79,6 +196,8 @@ export default function Trends() {
   const [selectedZone, setSelectedZone] = useState('All zones')
   const [view, setView] = useState('executive')
   const [chartType, setChartType] = useState('line')
+
+  const isAnalyst = view === 'analyst'
 
   useEffect(() => {
     setSelectedZone('All zones')
@@ -130,8 +249,18 @@ export default function Trends() {
         </div>
         <div className="flex items-center gap-2">
           <div className="bg-[#21262d] border border-[#30363d] rounded-full p-0.5 flex gap-0.5">
-            <button onClick={() => setView('executive')} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${view === 'executive' ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}>Plain English</button>
-            <button onClick={() => setView('technical')} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${view === 'technical' ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}>Technical</button>
+            <button
+              onClick={() => setView('executive')}
+              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${!isAnalyst ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
+            >
+              Executive
+            </button>
+            <button
+              onClick={() => setView('analyst')}
+              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${isAnalyst ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
+            >
+              Analyst
+            </button>
           </div>
           <div className="bg-[#21262d] border border-[#30363d] rounded-full p-0.5 flex gap-0.5">
             <button onClick={() => setChartType('line')} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${chartType === 'line' ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}>Line</button>
@@ -143,9 +272,9 @@ export default function Trends() {
       <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
 
         <div className="text-[10px] text-[#8b949e]">
-          {view === 'executive'
-            ? `This chart shows how vegetation coverage has changed across ${selectedSite.name} over time. Higher scores mean healthier, denser vegetation. The dotted line shows the target needed for bond release.`
-            : `Monthly NDVI time-series for ${selectedSite.name} 2019-2026. Sentinel-2 Band 8 / Band 4 ratio. Reference line at 0.35 indicates rehabilitating threshold used by Random Forest classifier.`}
+          {isAnalyst
+            ? `Monthly NDVI time-series for ${selectedSite.name}, 2019-2026. Sentinel-2 Band 8/Band 4 ratio. Reference line at 0.35 indicates the rehabilitating threshold used by the Random Forest classifier.`
+            : `This chart shows how vegetation coverage has changed across ${selectedSite.name} over time. Higher scores mean healthier, denser vegetation. The dotted line shows the target needed for bond release.`}
         </div>
 
         <div className="flex gap-2 flex-wrap">
@@ -166,12 +295,12 @@ export default function Trends() {
 
         <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4 flex flex-col" style={{ height: 280 }}>
           <div className="text-[10px] font-medium text-[#e6edf3] mb-1">
-            {view === 'executive' ? 'Vegetation health over time' : 'NDVI time-series - 2019-2026'}
+            {isAnalyst ? 'NDVI time-series, 2019-2026' : 'Vegetation health over time'}
           </div>
           <div className="text-[9px] text-[#484f58] mb-3">
-            {selectedZone} - Monthly - Sentinel-2
+            {selectedZone} | Monthly | Sentinel-2
             {selectedZone !== 'All zones' && (
-              <span className="ml-2 italic">- Estimated from site average. Per-zone satellite exports can be configured in the pipeline settings.</span>
+              <span className="ml-2 italic">| Estimated from site average. Per-zone satellite exports can be configured in the pipeline settings.</span>
             )}
           </div>
           <div className="flex-1 min-h-0">
@@ -182,9 +311,9 @@ export default function Trends() {
                   <YAxis tick={{ fontSize: 7, fill: '#484f58' }} domain={[0, 1]} />
                   <Tooltip
                     contentStyle={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 4, fontSize: 9 }}
-                    formatter={(val) => [val.toFixed(2), view === 'executive' ? 'Vegetation score' : 'NDVI']}
+                    formatter={(val) => [val.toFixed(2), isAnalyst ? 'NDVI' : 'Vegetation score']}
                   />
-                  <ReferenceLine y={0.35} stroke="#484f58" strokeDasharray="4 4" label={{ value: view === 'executive' ? 'Bond release target' : 'NDVI 0.35 threshold', position: 'insideTopRight', fontSize: 8, fill: '#484f58' }} />
+                  <ReferenceLine y={0.35} stroke="#484f58" strokeDasharray="4 4" label={{ value: isAnalyst ? 'NDVI 0.35 threshold' : 'Bond release target', position: 'insideTopRight', fontSize: 8, fill: '#484f58' }} />
                   <Line type="monotone" dataKey="score" stroke={lineColor} strokeWidth={2} dot={false} />
                 </LineChart>
               ) : (
@@ -193,7 +322,7 @@ export default function Trends() {
                   <YAxis tick={{ fontSize: 7, fill: '#484f58' }} domain={[0, 1]} />
                   <Tooltip
                     contentStyle={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 4, fontSize: 9 }}
-                    formatter={(val) => [val.toFixed(2), view === 'executive' ? 'Vegetation score' : 'NDVI']}
+                    formatter={(val) => [val.toFixed(2), isAnalyst ? 'NDVI' : 'Vegetation score']}
                   />
                   <ReferenceLine y={0.35} stroke="#484f58" strokeDasharray="4 4" />
                   <Bar dataKey="score" fill={lineColor} radius={[1, 1, 0, 0]} />
@@ -207,7 +336,7 @@ export default function Trends() {
 
           <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4 flex flex-col" style={{ height: 220 }}>
             <div className="text-[10px] font-medium text-[#e6edf3] mb-1">
-              {view === 'executive' ? 'How land is split over time' : 'Land classification breakdown'}
+              {isAnalyst ? 'Land classification breakdown' : 'How land is split over time'}
             </div>
             <div className="flex-1 min-h-0">
               <ResponsiveContainer width="100%" height="100%">
@@ -215,9 +344,9 @@ export default function Trends() {
                   <XAxis dataKey="label" tick={{ fontSize: 7, fill: '#484f58' }} interval={3} />
                   <YAxis tick={{ fontSize: 7, fill: '#484f58' }} />
                   <Tooltip contentStyle={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 4, fontSize: 9 }} />
-                  <Bar dataKey="recovering" stackId="a" fill="#2ea043" name={view === 'executive' ? 'Recovering well' : 'Rehabilitating'} />
-                  <Bar dataKey="early" stackId="a" fill="#d29922" name={view === 'executive' ? 'Early stage' : 'Early regrowth'} />
-                  <Bar dataKey="bare" stackId="a" fill="#cf222e" name={view === 'executive' ? 'Needs attention' : 'Bare/disturbed'} radius={[1, 1, 0, 0]} />
+                  <Bar dataKey="recovering" stackId="a" fill="#2ea043" name={isAnalyst ? 'Rehabilitating (NDVI > 0.35)' : 'Recovering well'} />
+                  <Bar dataKey="early" stackId="a" fill="#d29922" name={isAnalyst ? 'Early regrowth (NDVI 0.15 to 0.35)' : 'Early stage'} />
+                  <Bar dataKey="bare" stackId="a" fill="#cf222e" name={isAnalyst ? 'Bare or disturbed (NDVI < 0.15)' : 'Needs attention'} radius={[1, 1, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -232,9 +361,18 @@ export default function Trends() {
                     <span className="text-[8px] text-[#484f58]">{event.date}</span>
                     <span className="text-[9px] font-medium text-[#e6edf3]">{event.title}</span>
                   </div>
-                  <div className="text-[8px] text-[#8b949e] leading-relaxed">
-                    {view === 'executive' ? event.exec : event.tech}
-                  </div>
+                  {isAnalyst ? (
+                    <ul className="flex flex-col gap-0.5 mt-1">
+                      {event.tech.map((point, j) => (
+                        <li key={j} className="flex gap-1.5 text-[8px] text-[#8b949e]">
+                          <span className="text-[#3fb950] flex-shrink-0">-</span>
+                          <span>{point}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className="text-[8px] text-[#8b949e] leading-relaxed">{event.exec}</div>
+                  )}
                 </div>
               ))}
             </div>

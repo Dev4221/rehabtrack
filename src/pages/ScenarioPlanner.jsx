@@ -1,7 +1,6 @@
 import { useState } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts'
 import { useSite } from '../SiteContext'
-import ReactMarkdown from 'react-markdown'
 
 const apiUrl = import.meta.env.DEV
   ? 'http://localhost:3001/api/claude'
@@ -11,7 +10,7 @@ const interventions = [
   {
     id: 'none',
     label: 'Do nothing',
-    desc: 'No intervention - let the site recover at its current pace',
+    desc: 'No intervention, let the site recover at its current pace',
     costMin: 0,
     costMax: 0,
     growthBoost: 0,
@@ -51,7 +50,7 @@ const interventions = [
   {
     id: 'full',
     label: 'Full intervention programme',
-    desc: 'All of the above - weed treatment, replanting, and erosion control',
+    desc: 'All of the above: weed treatment, replanting, and erosion control',
     costMin: 700000,
     costMax: 1400000,
     growthBoost: 4.2,
@@ -125,7 +124,7 @@ Current site status:
 - Site status: ${selectedSite.status}
 
 Scenario being analysed:
-- Intervention: ${selectedIntervention.label} - ${selectedIntervention.desc}
+- Intervention: ${selectedIntervention.label}, ${selectedIntervention.desc}
 - External conditions: ${selectedFactor.label}
 - Timeframe: ${timeframe} years
 - Upfront cost: ${costStr}
@@ -139,7 +138,7 @@ Write a 3-paragraph plain-English analysis of this scenario:
 2. The financial case for or against this intervention
 3. What you recommend and why
 
-Be specific - use the actual numbers, zones, and dollar figures. Be direct and honest - if the scenario is bad, say so. Do not use markdown headers. Do not use long dashes - use regular hyphens. No asterisks or bold text.`
+Be specific and use the actual numbers, zones, and dollar figures. Be direct and honest. If the scenario is bad, say so. Do not use markdown headers. Do not use long dashes or em dashes. Use regular hyphens or commas instead. No asterisks or bold text.`
 
     try {
       const response = await fetch(apiUrl, {
@@ -178,7 +177,6 @@ Be specific - use the actual numbers, zones, and dollar figures. Be direct and h
 
         <div className="grid grid-cols-3 gap-4">
 
-          {/* Left - controls */}
           <div className="flex flex-col gap-3">
 
             <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
@@ -198,7 +196,7 @@ Be specific - use the actual numbers, zones, and dollar figures. Be direct and h
                     <div className="text-[8px] mt-0.5 opacity-70">{i.desc}</div>
                     {i.costMin > 0 && (
                       <div className="text-[8px] mt-1 text-[#484f58]">
-                        Cost: ${i.costMin.toLocaleString()} - ${i.costMax.toLocaleString()}
+                        Cost: ${i.costMin.toLocaleString()} to ${i.costMax.toLocaleString()}
                       </div>
                     )}
                   </button>
@@ -241,7 +239,6 @@ Be specific - use the actual numbers, zones, and dollar figures. Be direct and h
 
           </div>
 
-          {/* Middle - outcome */}
           <div className="flex flex-col gap-3">
 
             <div className={`rounded-lg p-4 border ${
@@ -298,7 +295,7 @@ Be specific - use the actual numbers, zones, and dollar figures. Be direct and h
 
             <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4 flex-1 flex flex-col" style={{ minHeight: 180 }}>
               <div className="text-[10px] font-medium text-[#e6edf3] mb-1">Recovery projection</div>
-              <div className="text-[9px] text-[#484f58] mb-2">With intervention vs without - {timeframe} year outlook</div>
+              <div className="text-[9px] text-[#484f58] mb-2">With intervention vs without | {timeframe} year outlook</div>
               <div className="flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -15 }}>
@@ -326,7 +323,6 @@ Be specific - use the actual numbers, zones, and dollar figures. Be direct and h
 
           </div>
 
-          {/* Right - AI analysis */}
           <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4 flex flex-col">
             <div className="flex items-center justify-between mb-3">
               <div className="text-[10px] font-medium text-[#e6edf3]">AI recommendation</div>
@@ -350,11 +346,11 @@ Be specific - use the actual numbers, zones, and dollar figures. Be direct and h
 
             {hasAnalysis && analysis && (
               <div className="flex-1 overflow-auto">
-                <div className="text-[10px] text-[#8b949e] leading-relaxed">
+                <div className="text-[10px] text-[#8b949e] leading-relaxed whitespace-pre-line">
                   {analysis}
                 </div>
                 <div className="mt-4 pt-3 border-t border-[#30363d] text-[8px] text-[#484f58] italic">
-                  Analysis by Claude AI - based on {selectedSite.name} satellite data and WA Mining Act 1978. Not a substitute for professional environmental or financial advice.
+                  Analysis by Claude AI, based on {selectedSite.name} satellite data and WA Mining Act 1978. Not a substitute for professional environmental or financial advice.
                 </div>
               </div>
             )}
