@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react'
 import Papa from 'papaparse'
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
+import { useSite } from '../SiteContext'
 
 export default function Dashboard() {
+  const { selectedSite } = useSite()
   const [ndviData, setNdviData] = useState([])
   const [view, setView] = useState('executive')
   const [year, setYear] = useState(2024)
@@ -25,46 +27,54 @@ export default function Dashboard() {
     })
   }, [])
 
+  const siteNdviOffset = {
+    'roy-hill': 0,
+    'cloudbreak': 0.08,
+    'brockman': -0.10,
+    'christmas-creek': -0.20,
+  }
+
+  const offset = siteNdviOffset[selectedSite.id] || 0
+
   const chartData = ndviData
     .filter(r => r.year === year)
     .map(r => ({
       month: ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][r.month - 1],
-      ndvi: r.mean_ndvi,
+      ndvi: Math.max(0, Math.min(1, r.mean_ndvi + offset)),
       recovering: parseInt(r.area_recovering),
     }))
 
-    const recovering = 61
-    const early = 22
-    const bare = 17
-    
+  const recovering = selectedSite.recovered
+  const early = selectedSite.id === 'roy-hill' ? 22 : selectedSite.id === 'cloudbreak' ? 18 : selectedSite.id === 'brockman' ? 28 : 35
+  const bare = 100 - recovering - early
+
+  const statusColor = selectedSite.status === 'on-track' ? 'text-[#3fb950]' : selectedSite.status === 'slow' ? 'text-[#e3b341]' : 'text-[#f85149]'
+  const statusBorder = selectedSite.status === 'on-track' ? 'border-[#2ea043]' : selectedSite.status === 'slow' ? 'border-[#d29922]' : 'border-[#cf222e]'
+  const statusBg = selectedSite.status === 'on-track' ? 'bg-[#1a2d1a]' : selectedSite.status === 'slow' ? 'bg-[#2d2000]' : 'bg-[#3d0000]'
+  const statusText = selectedSite.status === 'on-track'
+    ? 'This site is on track to meet its rehabilitation target'
+    : selectedSite.status === 'slow'
+    ? 'This site is recovering slower than required'
+    : 'This site is at risk of missing its bond release target'
+  const statusSub = selectedSite.status === 'on-track'
+    ? `${recovering}% of the disturbed land is showing strong vegetation recovery.`
+    : `${recovering}% recovered — below the required pace. Action needed to stay on schedule.`
 
   return (
     <div className="flex flex-col h-full">
 
-      {/* Top bar */}
       <div className="h-10 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between px-4 flex-shrink-0">
         <div className="text-[10px] text-[#8b949e]">
-          Overview <span className="text-[#e6edf3]">/ Roy Hill / {year}</span>
+          Overview <span className="text-[#e6edf3]">/ {selectedSite.name} / {year}</span>
         </div>
         <div className="flex items-center gap-2">
-          {/* View toggle */}
           <div className="bg-[#21262d] border border-[#30363d] rounded-full p-0.5 flex gap-0.5">
-            <button
-              onClick={() => setView('executive')}
-              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${view === 'executive' ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
-            >
-              Plain English
-            </button>
-            <button
-              onClick={() => setView('technical')}
-              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${view === 'technical' ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
-            >
-              Technical
-            </button>
+            <button onClick={() => setView('executive')} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${view === 'executive' ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}>Plain English</button>
+            <button onClick={() => setView('technical')} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${view === 'technical' ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}>Technical</button>
           </div>
-          <div className="flex items-center gap-1 bg-[#1c2128] border border-[#3d0000] rounded px-2 py-1 text-[9px] text-[#f85149]">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#f85149]"></div>
-            2 issues need attention
+          <div className={`flex items-center gap-1 bg-[#1c2128] border rounded px-2 py-1 text-[9px] ${selectedSite.alerts > 0 ? 'border-[#3d0000] text-[#f85149]' : 'border-[#30363d] text-[#484f58]'}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${selectedSite.alerts > 0 ? 'bg-[#f85149]' : 'bg-[#484f58]'}`}></div>
+            {selectedSite.alerts > 0 ? `${selectedSite.alerts} issues need attention` : 'All clear'}
           </div>
           <div className="bg-[#1a3a1a] border border-[#2ea043] rounded px-2 py-1 text-[9px] text-[#3fb950]">
             Download report
@@ -72,28 +82,22 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Summary banner */}
-      <div className="mx-4 mt-4 bg-[#1a2d1a] border border-[#2ea043] rounded-lg px-4 py-3 flex items-center justify-between flex-shrink-0">
+      <div className={`mx-4 mt-4 ${statusBg} border ${statusBorder} rounded-lg px-4 py-3 flex items-center justify-between flex-shrink-0`}>
         <div>
-          <div className="text-[12px] font-medium text-[#3fb950]">
-            {view === 'executive'
-              ? 'This site is on track to meet its rehabilitation target'
-              : 'Site NDVI: 0.41 mean · Growth rate: +8.2%/yr · Z-score baseline: 2019'}
+          <div className={`text-[12px] font-medium ${statusColor}`}>
+            {view === 'executive' ? statusText : `Site NDVI: ${(0.41 + offset).toFixed(2)} mean · Growth rate: +${selectedSite.growthRate}%/yr · Z-score baseline: 2019`}
           </div>
           <div className="text-[10px] text-[#68d391] mt-1">
-            {view === 'executive'
-              ? '61% of the disturbed land is showing strong vegetation recovery. Two small areas need attention.'
-              : 'Random Forest classifier: 61% rehabilitating · 22% early regrowth · 17% bare. Sentinel-2 10m resolution.'}
+            {view === 'executive' ? statusSub : `Random Forest classifier: ${recovering}% rehabilitating · ${early}% early regrowth · ${bare}% bare. Sentinel-2 10m resolution.`}
           </div>
         </div>
         <div className="text-right flex-shrink-0 ml-4">
-          <div className="text-[9px] text-[#68d391]">Bond on track to release</div>
-          <div className="text-xl font-medium text-[#3fb950]">$48,000,000</div>
-          <div className="text-[9px] text-[#68d391]">Q3 2027 · 19 months away</div>
+          <div className="text-[9px] text-[#68d391]">Bond lodged with government</div>
+          <div className={`text-xl font-medium ${statusColor}`}>${(selectedSite.bond / 1000000).toFixed(0)},000,000</div>
+          <div className="text-[9px] text-[#68d391]">{selectedSite.release} · {selectedSite.operator}</div>
         </div>
       </div>
 
-      {/* Metric cards */}
       <div className="grid grid-cols-4 gap-3 px-4 mt-3 flex-shrink-0">
         {[
           {
@@ -101,24 +105,24 @@ export default function Dashboard() {
             tech: 'Rehabilitated area',
             value: `${recovering}%`,
             sub: view === 'executive' ? 'of the disturbed area' : 'NDVI > 0.35 threshold',
-            trend: 'Up from 53% a year ago',
-            trendColor: 'text-[#3fb950]'
+            trend: selectedSite.status === 'on-track' ? 'Ahead of schedule' : selectedSite.status === 'slow' ? 'Behind schedule' : 'Significantly behind',
+            trendColor: statusColor,
           },
           {
             exec: 'How fast is it growing?',
             tech: 'Annual NDVI velocity',
-            value: '+8.2%',
+            value: `+${selectedSite.growthRate}%`,
             sub: view === 'executive' ? 'per year' : 'slope of linear regression',
-            trend: 'Target is 6% — ahead of schedule',
-            trendColor: 'text-[#3fb950]'
+            trend: `Target is 6% — ${selectedSite.growthRate >= 6 ? 'ahead of' : 'below'} schedule`,
+            trendColor: selectedSite.growthRate >= 6 ? 'text-[#3fb950]' : 'text-[#f85149]',
           },
           {
-            exec: 'Areas that need attention',
-            tech: 'Anomalous zones',
-            value: '22 ha',
-            sub: view === 'executive' ? 'across 2 zones' : 'Z-score > 2σ deviation',
-            trend: 'Action recommended this quarter',
-            trendColor: 'text-[#e3b341]'
+            exec: 'Total area monitored',
+            tech: 'Disturbed area (ha)',
+            value: selectedSite.area.toLocaleString(),
+            sub: view === 'executive' ? 'hectares' : 'hectares in rehabilitation',
+            trend: selectedSite.region,
+            trendColor: 'text-[#484f58]',
           },
           {
             exec: 'Last satellite check',
@@ -126,13 +130,11 @@ export default function Dashboard() {
             value: '5 days',
             sub: view === 'executive' ? 'ago' : 'Sentinel-2 · Band 8 / Band 4',
             trend: 'Next check in 2 days',
-            trendColor: 'text-[#484f58]'
-          }
+            trendColor: 'text-[#484f58]',
+          },
         ].map((card, i) => (
           <div key={i} className="bg-[#161b22] border border-[#30363d] rounded-lg p-3">
-            <div className="text-[9px] text-[#484f58] mb-1">
-              {view === 'executive' ? card.exec : card.tech}
-            </div>
+            <div className="text-[9px] text-[#484f58] mb-1">{view === 'executive' ? card.exec : card.tech}</div>
             <div className="text-xl font-medium text-[#e6edf3]">{card.value}</div>
             <div className="text-[9px] text-[#8b949e] mt-0.5">{card.sub}</div>
             <div className={`text-[9px] mt-1 ${card.trendColor}`}>{card.trend}</div>
@@ -140,25 +142,16 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {/* Main content grid */}
       <div className="grid grid-cols-3 gap-3 px-4 mt-3 flex-1 min-h-0 pb-4">
 
-        {/* Chart panel */}
         <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-3 flex flex-col">
           <div className="flex items-center justify-between mb-2 flex-shrink-0">
-            <div className="text-[11px] font-medium text-[#e6edf3]">
-              {view === 'executive' ? 'Vegetation recovery over time' : 'NDVI time-series'}
-            </div>
+            <div className="text-[11px] font-medium text-[#e6edf3]">{view === 'executive' ? 'Vegetation recovery over time' : 'NDVI time-series'}</div>
             <div className="text-[9px] text-[#484f58]">{year}</div>
           </div>
-
-          {/* Year slider */}
           <div className="mb-2 flex-shrink-0">
             <input
-              type="range"
-              min="2019"
-              max="2026"
-              value={year}
+              type="range" min="2019" max="2026" value={year}
               onChange={e => setYear(parseInt(e.target.value))}
               className="w-full accent-[#2ea043]"
             />
@@ -168,8 +161,6 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
-
-          {/* Bar chart */}
           <div className="flex-1 min-h-0">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData} margin={{ top: 0, right: 0, bottom: 0, left: -20 }}>
@@ -183,8 +174,6 @@ export default function Dashboard() {
               </BarChart>
             </ResponsiveContainer>
           </div>
-
-          {/* Progress bars */}
           <div className="mt-2 pt-2 border-t border-[#30363d] flex-shrink-0">
             {[
               { label: view === 'executive' ? 'Recovering well' : 'Rehabilitating (NDVI>0.35)', pct: recovering, color: '#2ea043' },
@@ -204,7 +193,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* AI Chat panel */}
         <div className="bg-[#161b22] border border-[#2ea043] rounded-lg p-3 flex flex-col">
           <div className="flex items-center justify-between mb-2 flex-shrink-0">
             <div className="text-[11px] font-medium text-[#e6edf3]">Ask a question</div>
@@ -214,76 +202,85 @@ export default function Dashboard() {
             <div className="bg-[#21262d] rounded px-2 py-1.5 text-[9px] text-[#8b949e] self-end max-w-[85%]">
               Will we get the bond money back on time?
             </div>
-            <div className="bg-[#1a2d1a] border border-[#2a4a2a] rounded px-2 py-1.5 text-[9px] text-[#b8e6b8] leading-relaxed max-w-[95%]">
-              Yes — at the current pace the site will meet the government's requirements by Q3 2027 and the full $48M will be returned. Two areas need attention: Zone C3 (rainfall damage) and Zone B2 (possible weeds). Ignoring them could delay release by 12–18 months.
-            </div>
-            <div className="bg-[#21262d] rounded px-2 py-1.5 text-[9px] text-[#8b949e] self-end max-w-[85%]">
-              What does the weed issue mean for us?
-            </div>
-            <div className="bg-[#1a2d1a] border border-[#2a4a2a] rounded px-2 py-1.5 text-[9px] text-[#b8e6b8] leading-relaxed max-w-[95%]">
-              Zone B2 may have buffel grass — an invasive weed. Under WA mining law this is reportable and could pause the bond release verification. A ground inspection this month would confirm it.
+            <div className="bg-[#1a2d1a] border border-[#2a4a2a] rounded px-2 py-1.5 text-[9px] text-[#b8e6b8] leading-relaxed max-w-[92%]">
+              {selectedSite.status === 'on-track'
+                ? `Yes — ${selectedSite.name} is on track. At +${selectedSite.growthRate}%/yr, the site will meet the government's requirements by ${selectedSite.release} and the full $${(selectedSite.bond/1000000).toFixed(0)}M will be returned.`
+                : selectedSite.status === 'slow'
+                ? `At risk — ${selectedSite.name} is recovering at +${selectedSite.growthRate}%/yr, below the 6% annual target. Bond release is expected ${selectedSite.release}, later than planned.`
+                : `Significant risk — ${selectedSite.name} is recovering at only +${selectedSite.growthRate}%/yr, well below the 6% target. Bond release is projected ${selectedSite.release} without urgent intervention.`
+              }
             </div>
           </div>
           <div className="flex gap-2 mt-2 flex-shrink-0">
             <input
               className="flex-1 bg-[#0d1117] border border-[#30363d] rounded px-2 py-1.5 text-[9px] text-[#484f58] focus:outline-none focus:border-[#2ea043]"
               placeholder="Ask anything about this site..."
+              onClick={() => window.location.href = '/ask'}
+              readOnly
             />
-            <button className="bg-[#1a3a1a] border border-[#2ea043] rounded px-2 py-1.5 text-[9px] text-[#3fb950]">
+            <button
+              className="bg-[#1a3a1a] border border-[#2ea043] rounded px-2 py-1.5 text-[9px] text-[#3fb950]"
+              onClick={() => window.location.href = '/ask'}
+            >
               Ask
             </button>
           </div>
         </div>
 
-        {/* Right column */}
         <div className="flex flex-col gap-3">
-
-          {/* Alerts panel */}
           <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-3 flex-1">
             <div className="flex items-center justify-between mb-2">
-              <div className="text-[11px] font-medium text-[#e6edf3]">
-                {view === 'executive' ? 'Issues needing attention' : 'AI anomaly alerts'}
-              </div>
+              <div className="text-[11px] font-medium text-[#e6edf3]">{view === 'executive' ? 'Issues needing attention' : 'AI anomaly alerts'}</div>
               <span className="text-[8px] px-1.5 py-0.5 rounded bg-[#1a3a1a] text-[#3fb950]">live</span>
             </div>
-            {[
-              { color: 'bg-[#3d0000] text-[#f85149]', icon: '⚠', title: 'Zone C3 — vegetation loss (14ha)', sub: '2 days ago · monitor weekly', exec: 'Likely rainfall damage. Should recover in 4 months.', tech: 'NDVI=0.12 (baseline 0.30, z=−2.8σ) · confidence 91%' },
-              { color: 'bg-[#2d2000] text-[#e3b341]', icon: '◈', title: 'Zone B2 — possible weed growth (8ha)', sub: '5 days ago · ground check needed', exec: 'May be buffel grass. Reportable if confirmed.', tech: 'Spectral anomaly vs native regrowth · confidence 78%' },
-              { color: 'bg-[#1a3a1a] text-[#3fb950]', icon: '✓', title: 'Zone A1 — milestone reached ✓', sub: '12 days ago · verified', exec: '80% recovered — bond milestone confirmed.', tech: 'NDVI mean 0.61 > 0.35 threshold · verified' },
-            ].map((alert, i) => (
-              <div key={i} className="flex gap-2 py-1.5 border-b border-[#30363d] last:border-0 items-start">
-                <div className={`w-4 h-4 rounded flex items-center justify-center flex-shrink-0 text-[9px] ${alert.color}`}>
-                  {alert.icon}
-                </div>
-                <div>
-                  <div className="text-[9px] text-[#e6edf3] font-medium">{alert.title}</div>
-                  <div className="text-[8px] text-[#8b949e] mt-0.5">
-                    {view === 'executive' ? alert.exec : alert.tech}
+            {selectedSite.alerts === 0 ? (
+              <div className="text-[9px] text-[#484f58] py-4 text-center">No open alerts — all areas recovering as expected</div>
+            ) : (
+              <>
+                <div className="flex gap-2 py-1.5 border-b border-[#30363d] items-start">
+                  <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 text-[9px] bg-[#3d0000] text-[#f85149]">⚠</div>
+                  <div>
+                    <div className="text-[9px] text-[#e6edf3] font-medium">Zone C3 — vegetation loss (14ha)</div>
+                    <div className="text-[8px] text-[#8b949e] mt-0.5">{view === 'executive' ? 'Likely rainfall damage. Should recover in 4 months.' : 'NDVI=0.12 (baseline 0.30, z=−2.8σ) · confidence 91%'}</div>
+                    <div className="text-[8px] text-[#484f58] mt-0.5">2 days ago · monitor weekly</div>
                   </div>
-                  <div className="text-[8px] text-[#484f58] mt-0.5">{alert.sub}</div>
                 </div>
-              </div>
-            ))}
+                {selectedSite.alerts >= 2 && (
+                  <div className="flex gap-2 py-1.5 border-b border-[#30363d] items-start">
+                    <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 text-[9px] bg-[#2d2000] text-[#e3b341]">◈</div>
+                    <div>
+                      <div className="text-[9px] text-[#e6edf3] font-medium">Zone B2 — possible weed growth (8ha)</div>
+                      <div className="text-[8px] text-[#8b949e] mt-0.5">{view === 'executive' ? 'May be buffel grass. Reportable if confirmed.' : 'Spectral anomaly vs native regrowth · confidence 78%'}</div>
+                      <div className="text-[8px] text-[#484f58] mt-0.5">5 days ago · ground check needed</div>
+                    </div>
+                  </div>
+                )}
+                <div className="flex gap-2 py-1.5 items-start">
+                  <div className="w-4 h-4 rounded flex items-center justify-center flex-shrink-0 text-[9px] bg-[#1a3a1a] text-[#3fb950]">✓</div>
+                  <div>
+                    <div className="text-[9px] text-[#e6edf3] font-medium">Zone A1 — milestone reached ✓</div>
+                    <div className="text-[8px] text-[#8b949e] mt-0.5">{view === 'executive' ? '80% recovered — bond milestone confirmed.' : 'NDVI mean 0.61 > 0.35 threshold · verified'}</div>
+                    <div className="text-[8px] text-[#484f58] mt-0.5">12 days ago · verified</div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Bond panel */}
           <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-3">
             <div className="text-[11px] font-medium text-[#e6edf3] mb-2">Bond forecast</div>
             {[
-              { label: 'Bond lodged with government', value: '$48,000,000' },
-              { label: view === 'executive' ? 'Annual recovery rate' : 'NDVI velocity (linear regression)', value: '+8.2% / yr' },
-              { label: 'Expected release', value: 'Q3 2027', valueColor: 'text-[#3fb950]' },
-              { label: 'Capital to be returned', value: '$48M', valueColor: 'text-[#3fb950]', big: true },
+              { label: 'Bond lodged with government', value: `$${(selectedSite.bond/1000000).toFixed(0)},000,000` },
+              { label: view === 'executive' ? 'Annual recovery rate' : 'NDVI velocity (linear regression)', value: `+${selectedSite.growthRate}% / yr` },
+              { label: 'Expected release', value: selectedSite.release, valueColor: statusColor },
+              { label: 'Capital to be returned', value: `$${(selectedSite.bond/1000000).toFixed(0)}M`, valueColor: statusColor, big: true },
             ].map((row, i) => (
               <div key={i} className="flex justify-between items-center py-1.5 border-b border-[#30363d] last:border-0">
                 <span className="text-[9px] text-[#8b949e]">{row.label}</span>
-                <span className={`font-medium ${row.big ? 'text-base' : 'text-[10px]'} ${row.valueColor || 'text-[#e6edf3]'}`}>
-                  {row.value}
-                </span>
+                <span className={`font-medium ${row.big ? 'text-base' : 'text-[10px]'} ${row.valueColor || 'text-[#e6edf3]'}`}>{row.value}</span>
               </div>
             ))}
           </div>
-
         </div>
       </div>
     </div>

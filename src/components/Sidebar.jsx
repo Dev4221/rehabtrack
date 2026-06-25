@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useSite } from '../SiteContext'
 
 const navItems = [
   { section: 'Monitoring' },
@@ -16,10 +17,11 @@ const navItems = [
 ]
 
 export default function Sidebar() {
+  const { selectedSite, setSelectedSite, sites } = useSite()
+
   return (
     <div className="w-48 bg-[#161b22] border-r border-[#30363d] flex flex-col flex-shrink-0">
-      
-      {/* Logo */}
+
       <div className="px-3 py-3 border-b border-[#30363d]">
         <div className="flex items-center gap-2">
           <div className="w-6 h-6 rounded-md bg-[#1a3a1a] flex items-center justify-center text-[#3fb950] text-xs">
@@ -32,7 +34,6 @@ export default function Sidebar() {
         </div>
       </div>
 
-      {/* Nav items */}
       <nav className="flex-1 py-2">
         {navItems.map((item, i) => {
           if (item.section) {
@@ -71,11 +72,22 @@ export default function Sidebar() {
         })}
       </nav>
 
-      {/* Site selector */}
       <div className="p-3 border-t border-[#30363d]">
-        <div className="bg-[#1c2128] border border-[#3d444d] rounded px-2 py-1.5 text-[10px] text-[#8b949e] flex justify-between items-center">
-          <span>Roy Hill — Pilbara</span>
-          <span>▾</span>
+        <div className="text-[8px] text-[#484f58] mb-1.5 uppercase tracking-wider">Currently viewing</div>
+        <div className="flex flex-col gap-1">
+          {sites.map(site => (
+            <button
+              key={site.id}
+              onClick={() => setSelectedSite(site)}
+              className={`text-left px-2 py-1.5 rounded text-[9px] transition-colors ${
+                selectedSite.id === site.id
+                  ? 'bg-[#1a3a1a] text-[#3fb950] border border-[#2ea043]'
+                  : 'text-[#8b949e] hover:text-[#e6edf3] hover:bg-[#1c2128]'
+              }`}
+            >
+              {site.name}
+            </button>
+          ))}
         </div>
       </div>
 
