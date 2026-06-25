@@ -4,7 +4,7 @@ A full-stack AI dashboard for monitoring mine rehabilitation progress across Wes
 
 **Live demo:** https://rehabtrack-ivory.vercel.app
 
-![RehabTrack Dashboard](public/dashboard.png)
+![RehabTrack Dashboard](https://raw.githubusercontent.com/Dev4221/rehabtrack/main/public/dashboard.png)
 
 ---
 
