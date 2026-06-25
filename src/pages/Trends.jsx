@@ -121,7 +121,7 @@ export default function Trends() {
           <div className="text-[9px] text-[#484f58] mb-3">
             {selectedZone} · Monthly · Sentinel-2
             {selectedZone !== 'All zones' && (
-              <span className="ml-2 italic">· Zone-level data estimated from site average. Full per-zone time-series available on request.</span>
+              <span className="ml-2 italic">· Estimated from site average. Per-zone satellite exports can be configured in the pipeline settings.</span>
             )}
           </div>
           <div className="flex-1 min-h-0">
