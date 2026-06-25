@@ -8,6 +8,7 @@ import BondCalculator from './pages/BondCalculator'
 import Compliance from './pages/Compliance'
 import AgentActivity from './pages/AgentActivity'
 import Trends from './pages/Trends'
+import SiteMap from './pages/SiteMap'
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
             <Route path="/compliance" element={<Compliance />} />
             <Route path="/agents" element={<AgentActivity />} />
             <Route path="/trends" element={<Trends />} />
+            <Route path="/map" element={<SiteMap />} />
           </Routes>
         </main>
       </div>
