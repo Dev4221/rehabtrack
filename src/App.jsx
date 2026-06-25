@@ -7,6 +7,7 @@ import GenerateReport from './pages/GenerateReport'
 import BondCalculator from './pages/BondCalculator'
 import Compliance from './pages/Compliance'
 import AgentActivity from './pages/AgentActivity'
+import Trends from './pages/Trends'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
             <Route path="/bond" element={<BondCalculator />} />
             <Route path="/compliance" element={<Compliance />} />
             <Route path="/agents" element={<AgentActivity />} />
+            <Route path="/trends" element={<Trends />} />
           </Routes>
         </main>
       </div>
