@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { useSite } from '../SiteContext'
 
 const reportTypes = [
   { id: 'compliance', label: 'Compliance summary', desc: 'For the Department of Mines and regulators' },
@@ -8,36 +9,140 @@ const reportTypes = [
   { id: 'technical', label: 'Technical report', desc: 'For environmental scientists and consultants' },
 ]
 
-const SITE_DATA = `
-Roy Hill Iron Ore Mine — Rehabilitation Status Report
-Site: Roy Hill, Pilbara, Western Australia
-Operator: Roy Hill Holdings
-Total disturbed area: 2,840 hectares
+const siteDataMap = {
+  'roy-hill': {
+    name: 'Roy Hill Iron Ore Mine',
+    operator: 'Roy Hill Holdings',
+    region: 'Pilbara, Western Australia',
+    area: 2840,
+    recovered: 61,
+    early: 22,
+    bare: 17,
+    growthRate: 8.2,
+    bond: 48000000,
+    release: 'Q3 2027',
+    status: 'on track',
+    zones: `
+- Zone A1 (420ha, northern section): 80% recovered - bond milestone reached
+- Zone A2 (380ha, eastern section): 72% recovered - on track
+- Zone B1 (290ha, central section): 52% recovered - on track
+- Zone B2 (340ha, western section): 44% recovered - weed encroachment detected (buffel grass suspected)
+- Zone B3 (260ha, central western): 48% recovered - on track
+- Zone C1 (220ha, southern section): 38% recovered - on track
+- Zone C2 (180ha, south eastern): 32% recovered - needs attention
+- Zone C3 (140ha, southern section): 29% recovered - vegetation loss from rainfall erosion
+- Zone D1 (300ha): infrastructure - not applicable`,
+    alerts: `
+- Zone C3: 14 hectares of vegetation loss detected 2 days ago. Likely rainfall erosion. Expected natural recovery 3-4 months.
+- Zone B2: 8 hectares showing possible buffel grass weed encroachment. Ground inspection required.
+- Zone A1: Bond milestone confirmed 12 days ago.`,
+  },
+  'cloudbreak': {
+    name: 'Cloudbreak Iron Ore Mine',
+    operator: 'Fortescue Metals Group',
+    region: 'Pilbara, Western Australia',
+    area: 4100,
+    recovered: 71,
+    early: 18,
+    bare: 11,
+    growthRate: 6.1,
+    bond: 62000000,
+    release: 'Q1 2027',
+    status: 'on track',
+    zones: `
+- Zone A1 (520ha, northern section): 82% recovered - bond milestone reached
+- Zone A2 (480ha, eastern section): 76% recovered - on track
+- Zone B1 (380ha, central section): 68% recovered - on track
+- Zone B2 (420ha, western section): 62% recovered - on track
+- Zone C1 (340ha, southern section): 55% recovered - on track
+- Zone D1 (280ha): infrastructure - not applicable`,
+    alerts: `
+- Zone A1: Bond milestone confirmed 3 days ago - 82% recovery verified.
+- No active vegetation loss or weed alerts for this site.`,
+  },
+  'brockman': {
+    name: 'Brockman 4 Iron Ore Mine',
+    operator: 'Rio Tinto',
+    region: 'Pilbara, Western Australia',
+    area: 2100,
+    recovered: 44,
+    early: 28,
+    bare: 28,
+    growthRate: 4.2,
+    bond: 35000000,
+    release: 'Q1 2029',
+    status: 'behind schedule',
+    zones: `
+- Zone A1 (320ha, northern section): 58% recovered - on track
+- Zone B1 (280ha, central section): 48% recovered - on track
+- Zone C1 (240ha, southern section): 42% recovered - on track
+- Zone D2 (180ha, eastern section): 24% recovered - below target
+- Zone E1 (260ha, western section): 38% recovered - on track
+- Zone F1 (180ha): infrastructure - not applicable`,
+    alerts: `
+- Zone D2: Recovery rate +2.1%/yr vs 6% target. Projected milestone Q3 2031 vs target Q1 2029. Replanting recommended.`,
+  },
+  'christmas-creek': {
+    name: 'Christmas Creek Iron Ore Mine',
+    operator: 'Fortescue Metals Group',
+    region: 'Pilbara, Western Australia',
+    area: 3200,
+    recovered: 29,
+    early: 35,
+    bare: 36,
+    growthRate: 2.8,
+    bond: 41000000,
+    release: 'Q3 2030+',
+    status: 'at risk - significantly behind schedule',
+    zones: `
+- Zone A1 (380ha, northern section): 42% recovered - below target
+- Zone B1 (340ha, central section): 35% recovered - below target
+- Zone C1 (280ha, southern section): 28% recovered - needs attention
+- Zone E1 (240ha, northern section): 12% recovered - critical
+- Zone E3 (220ha, central section): 18% recovered - erosion damage
+- Zone F2 (180ha, western section): 22% recovered - weed encroachment
+- Zone G1 (280ha): infrastructure - not applicable`,
+    alerts: `
+- Zone E1: Critical - only 12% recovered. Projected milestone 2035+. Urgent intervention required.
+- Zone E3: Erosion spreading - 95 hectares now affected after recent rainfall. Erosion control works needed.
+- Zone F2: Buffel grass weed encroachment across 62 hectares. Reportable event under Mine Closure Plan s.4.2.`,
+  },
+}
+
+const apiUrl = import.meta.env.DEV
+  ? 'http://localhost:3001/api/claude'
+  : '/api/claude'
+
+export default function GenerateReport() {
+  const { selectedSite } = useSite()
+  const [reportType, setReportType] = useState('compliance')
+  const [tone, setTone] = useState('plain')
+  const [report, setReport] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  const siteInfo = siteDataMap[selectedSite.id] || siteDataMap['roy-hill']
+
+  const getSiteData = () => `
+${siteInfo.name} - Rehabilitation Status Report
+Site: ${siteInfo.name}, ${siteInfo.region}
+Operator: ${siteInfo.operator}
+Total disturbed area: ${siteInfo.area.toLocaleString()} hectares
 Monitoring period: January 2019 to June 2026
 
 Current status:
-- 61% of disturbed land is recovering well (vegetation density above threshold)
-- 22% is in early stage recovery
-- 17% needs attention
-- Annual recovery rate: +8.2% per year (regulatory target: 6% per year)
-- Rehabilitation bond lodged: $48,000,000
-- Projected bond release: Q3 2027
+- ${siteInfo.recovered}% of disturbed land is recovering well (vegetation density above threshold)
+- ${siteInfo.early}% is in early stage recovery
+- ${siteInfo.bare}% needs attention
+- Annual recovery rate: +${siteInfo.growthRate}% per year (regulatory target: 6% per year)
+- Rehabilitation bond lodged: $${(siteInfo.bond / 1000000).toFixed(0)},000,000
+- Projected bond release: ${siteInfo.release}
+- Overall status: ${siteInfo.status}
 
 Zone details:
-- Zone A1 (420ha, northern section): 80% recovered — bond milestone reached
-- Zone A2 (380ha, eastern section): 72% recovered — on track
-- Zone B1 (290ha, central section): 52% recovered — on track
-- Zone B2 (340ha, western section): 44% recovered — weed encroachment detected (buffel grass suspected)
-- Zone B3 (260ha, central western): 48% recovered — on track
-- Zone C1 (220ha, southern section): 38% recovered — on track
-- Zone C2 (180ha, south eastern): 32% recovered — needs attention
-- Zone C3 (140ha, southern section): 29% recovered — vegetation loss from rainfall erosion
-- Zone D1 (300ha): infrastructure — not applicable
+${siteInfo.zones}
 
 Active alerts:
-- Zone C3: 14 hectares of vegetation loss detected 2 days ago. Likely rainfall erosion. Expected natural recovery 3-4 months.
-- Zone B2: 8 hectares showing possible buffel grass weed encroachment. Ground inspection required. Reportable under Mine Closure Plan s.4.2 if confirmed.
-- Zone A1: Bond milestone confirmed 12 days ago.
+${siteInfo.alerts}
 
 Regulatory context:
 - Governed by WA Mining Act 1978 and DMIRS rehabilitation guidelines
@@ -45,25 +150,15 @@ Regulatory context:
 - Weed encroachment must be treated before bond release verification
 `
 
-const apiUrl = import.meta.env.DEV
-  ? 'http://localhost:3001/api/claude'
-  : '/api/claude'
-
-export default function GenerateReport() {
-  const [reportType, setReportType] = useState('compliance')
-  const [tone, setTone] = useState('plain')
-  const [report, setReport] = useState('')
-  const [loading, setLoading] = useState(false)
-
   const generateReport = async () => {
     setLoading(true)
     setReport('')
 
     const selectedType = reportTypes.find(r => r.id === reportType)
 
-    const prompt = `You are writing a professional ${selectedType.label} for the Roy Hill mine rehabilitation project.
+    const prompt = `You are writing a professional ${selectedType.label} for the ${siteInfo.name} rehabilitation project.
 
-${SITE_DATA}
+${getSiteData()}
 
 Write a ${selectedType.label} with three clearly labelled sections:
 1. Current status
@@ -71,11 +166,11 @@ Write a ${selectedType.label} with three clearly labelled sections:
 3. Bond release outlook
 
 ${tone === 'plain'
-  ? 'Write in plain English. No jargon. Speak as if addressing a non-technical reader. Always relate findings to dollars, dates, and practical actions.'
-  : 'Write in technical language appropriate for environmental scientists. Include specific metrics, zone references, and regulatory citations where relevant.'
+    ? 'Write in plain English. No jargon. Speak as if addressing a non-technical reader. Always relate findings to dollars, dates, and practical actions.'
+    : 'Write in technical language appropriate for environmental scientists. Include specific metrics, zone references, and regulatory citations where relevant.'
 }
 
-Keep each section to 2-3 sentences. Be specific — reference actual zones, percentages, and dollar figures from the data provided. Do not use markdown headers with # symbols. Use plain section titles like "Current Status" followed by a line break.`
+Keep each section to 2-3 sentences. Be specific - reference actual zones, percentages, and dollar figures from the data provided. Do not use markdown headers with # symbols. Use plain section titles like "Current Status" followed by a line break. Do not use long dashes. Use a regular hyphen instead.`
 
     try {
       const response = await fetch(apiUrl, {
@@ -109,7 +204,7 @@ Keep each section to 2-3 sentences. Be specific — reference actual zones, perc
         <div>
           <div className="text-[9px] text-[#484f58] mb-1.5">Site</div>
           <div className="bg-[#1c2128] border border-[#30363d] rounded px-3 py-2 text-[10px] text-[#e6edf3]">
-            Roy Hill Iron Ore — Pilbara WA
+            {siteInfo.name} - {selectedSite.region}
           </div>
         </div>
 
@@ -161,7 +256,7 @@ Keep each section to 2-3 sentences. Be specific — reference actual zones, perc
 
         {report && (
           <button className="bg-[#1c2128] border border-[#30363d] rounded py-2 text-[9px] text-[#8b949e] flex items-center justify-center gap-1.5">
-            ↓ Download as PDF
+            Download as PDF
           </button>
         )}
       </div>
@@ -172,7 +267,7 @@ Keep each section to 2-3 sentences. Be specific — reference actual zones, perc
             <div className="text-[32px] mb-3">◧</div>
             <div className="text-[13px] font-medium text-[#e6edf3] mb-2">Choose a report type and click Generate</div>
             <div className="text-[10px] text-[#8b949e] max-w-sm">
-              Claude will write a professional document based on the real satellite data for this site. Ready to send to regulators, investors, or your board.
+              Claude will write a professional document based on real satellite data for {siteInfo.name}. Ready to send to regulators, investors, or your board.
             </div>
           </div>
         )}
@@ -189,10 +284,10 @@ Keep each section to 2-3 sentences. Be specific — reference actual zones, perc
             <div className="flex items-center justify-between mb-6">
               <div>
                 <div className="text-[13px] font-medium text-[#e6edf3]">
-                  Roy Hill Rehabilitation — {reportTypes.find(r => r.id === reportType)?.label}
+                  {siteInfo.name} - {reportTypes.find(r => r.id === reportType)?.label}
                 </div>
                 <div className="text-[9px] text-[#484f58] mt-1">
-                  Generated by Claude · June 2026 · Based on Sentinel-2 satellite data
+                  Generated by Claude - June 2026 - Based on Sentinel-2 satellite data
                 </div>
               </div>
             </div>
@@ -215,7 +310,7 @@ Keep each section to 2-3 sentences. Be specific — reference actual zones, perc
             </ReactMarkdown>
 
             <div className="mt-6 pt-4 border-t border-[#30363d] text-[8px] text-[#484f58] italic">
-              Generated by Claude AI · Grounded in Sentinel-2 NDVI data, DMIRS compliance guidelines, and WA Mining Act 1978 · This document is a data-driven summary and is not a substitute for formal environmental assessment by a qualified consultant.
+              Generated by Claude AI - Grounded in Sentinel-2 NDVI data, DMIRS compliance guidelines, and WA Mining Act 1978 - This document is a data-driven summary and is not a substitute for formal environmental assessment by a qualified consultant.
             </div>
           </div>
         )}
