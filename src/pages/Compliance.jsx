@@ -1,55 +1,12 @@
 import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { useSite } from '../SiteContext'
 
 const sites = [
-  {
-    name: 'Roy Hill',
-    region: 'Pilbara',
-    operator: 'Roy Hill Holdings',
-    recovered: 61,
-    target: 6,
-    actual: 8.2,
-    bond: 48000000,
-    release: 'Q3 2027',
-    status: 'on-track',
-    alerts: 2,
-  },
-  {
-    name: 'Cloudbreak',
-    region: 'Pilbara',
-    operator: 'Fortescue Metals',
-    recovered: 71,
-    target: 6,
-    actual: 6.1,
-    bond: 62000000,
-    release: 'Q1 2027',
-    status: 'on-track',
-    alerts: 0,
-  },
-  {
-    name: 'Brockman 4',
-    region: 'Pilbara',
-    operator: 'Rio Tinto',
-    recovered: 44,
-    target: 6,
-    actual: 4.2,
-    bond: 35000000,
-    release: 'Q1 2029',
-    status: 'slow',
-    alerts: 1,
-  },
-  {
-    name: 'Christmas Creek',
-    region: 'Pilbara',
-    operator: 'Fortescue Metals',
-    recovered: 29,
-    target: 6,
-    actual: 2.8,
-    bond: 41000000,
-    release: 'Q3 2030+',
-    status: 'at-risk',
-    alerts: 3,
-  },
+  { name: 'Roy Hill', region: 'Pilbara', operator: 'Roy Hill Holdings', recovered: 61, target: 6, actual: 8.2, bond: 48000000, release: 'Q3 2027', status: 'on-track', alerts: 2 },
+  { name: 'Cloudbreak', region: 'Pilbara', operator: 'Fortescue Metals', recovered: 71, target: 6, actual: 6.1, bond: 62000000, release: 'Q1 2027', status: 'on-track', alerts: 0 },
+  { name: 'Brockman 4', region: 'Pilbara', operator: 'Rio Tinto', recovered: 44, target: 6, actual: 4.2, bond: 35000000, release: 'Q1 2029', status: 'slow', alerts: 1 },
+  { name: 'Christmas Creek', region: 'Pilbara', operator: 'Fortescue Metals', recovered: 29, target: 6, actual: 2.8, bond: 41000000, release: 'Q3 2030+', status: 'at-risk', alerts: 3 },
 ]
 
 const statusStyles = {
@@ -68,6 +25,7 @@ const apiUrl = import.meta.env.DEV
   : '/api/claude'
 
 export default function Compliance() {
+  const { selectedSite } = useSite()
   const [report, setReport] = useState('')
   const [loading, setLoading] = useState(false)
   const [showReport, setShowReport] = useState(false)
@@ -75,17 +33,9 @@ export default function Compliance() {
   const downloadAll = () => {
     const headers = ['Site', 'Region', 'Operator', 'Land Recovered (%)', 'Annual Rate (%)', 'Target (%)', 'vs Target', 'Bond Value ($)', 'Expected Release', 'Active Alerts', 'Status']
     const rows = sites.map(s => [
-      s.name,
-      s.region,
-      s.operator,
-      s.recovered,
-      s.actual,
-      s.target,
+      s.name, s.region, s.operator, s.recovered, s.actual, s.target,
       `${(s.actual - s.target).toFixed(1)}% ${s.actual >= s.target ? 'ahead' : 'behind'}`,
-      s.bond,
-      s.release,
-      s.alerts,
-      statusStyles[s.status].label
+      s.bond, s.release, s.alerts, statusStyles[s.status].label
     ])
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n')
     const blob = new Blob([csv], { type: 'text/csv' })
@@ -104,12 +54,12 @@ export default function Compliance() {
 
     const prompt = `You are writing a regulatory compliance summary for Western Australian mine rehabilitation bonds.
 
-Here is the current status across all monitored sites:
+Current status across all monitored sites:
 
-Roy Hill (Roy Hill Holdings): 61% recovered, +8.2%/yr growth rate, $48M bond, Q3 2027 release, 2 active alerts. Status: On track.
+Roy Hill (Roy Hill Holdings): 61% recovered, +8.2%/yr, $48M bond, Q3 2027 release, 2 active alerts. Status: On track.
 Cloudbreak (Fortescue Metals): 71% recovered, +6.1%/yr, $62M bond, Q1 2027 release, 0 alerts. Status: On track.
-Brockman 4 (Rio Tinto): 44% recovered, +4.2%/yr, $35M bond, Q1 2029 release, 1 alert. Status: Slow — below 6%/yr target.
-Christmas Creek (Fortescue Metals): 29% recovered, +2.8%/yr, $41M bond, Q3 2030+ release, 3 alerts. Status: At risk — significantly below target.
+Brockman 4 (Rio Tinto): 44% recovered, +4.2%/yr, $35M bond, Q1 2029 release, 1 alert. Status: Slow - below 6%/yr target.
+Christmas Creek (Fortescue Metals): 29% recovered, +2.8%/yr, $41M bond, Q3 2030+ release, 3 alerts. Status: At risk - significantly below target.
 
 Total bonds held: $186M. On track for 2027: $110M. At risk of delay: $76M.
 
@@ -118,7 +68,7 @@ Write a professional compliance summary with three sections:
 2. Sites requiring immediate attention
 3. Recommended actions
 
-Write in plain English. No jargon. Reference specific sites, dollar figures, and dates. Keep each section to 2-3 sentences.`
+Write in plain English. No jargon. Reference specific sites, dollar figures, and dates. Do not use long dashes - use regular hyphens. Keep each section to 2-3 sentences.`
 
     try {
       const response = await fetch(apiUrl, {
@@ -147,16 +97,10 @@ Write in plain English. No jargon. Reference specific sites, dollar figures, and
           Compliance tracker <span className="text-[#e6edf3]">/ All WA sites</span>
         </div>
         <div className="flex gap-2">
-          <button
-            onClick={downloadAll}
-            className="bg-[#1c2128] border border-[#30363d] rounded px-3 py-1 text-[9px] text-[#8b949e] hover:text-[#e6edf3] transition-colors"
-          >
-            ↓ Download all as CSV
+          <button onClick={downloadAll} className="bg-[#1c2128] border border-[#30363d] rounded px-3 py-1 text-[9px] text-[#8b949e] hover:text-[#e6edf3] transition-colors">
+            Download all as CSV
           </button>
-          <button
-            onClick={generateComplianceReport}
-            className="bg-[#1a3a1a] border border-[#2ea043] rounded px-3 py-1 text-[9px] text-[#3fb950]"
-          >
+          <button onClick={generateComplianceReport} className="bg-[#1a3a1a] border border-[#2ea043] rounded px-3 py-1 text-[9px] text-[#3fb950]">
             {loading ? 'Generating...' : 'Generate compliance report'}
           </button>
         </div>
@@ -165,7 +109,7 @@ Write in plain English. No jargon. Reference specific sites, dollar figures, and
       <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
 
         <div className="text-[10px] text-[#8b949e]">
-          A single view of all monitored sites, their current recovery status, and their bond positions. Updated automatically after every satellite pass.
+          A portfolio view of all monitored sites, their current recovery status, and their bond positions. This is a management-level view — select a specific site in the sidebar for detailed zone-level analysis. Updated after every satellite pass.
         </div>
 
         <div className="grid grid-cols-4 gap-3">
@@ -192,22 +136,20 @@ Write in plain English. No jargon. Reference specific sites, dollar figures, and
           {sites.map((site, i) => {
             const diff = site.actual - site.target
             const style = statusStyles[site.status]
+            const isSelected = selectedSite.name === site.name
             return (
-              <div key={i} className="grid grid-cols-7 px-4 py-3 border-b border-[#30363d] last:border-0 items-center hover:bg-[#1c2128] transition-colors">
+              <div key={i} className={`grid grid-cols-7 px-4 py-3 border-b border-[#30363d] last:border-0 items-center transition-colors ${isSelected ? 'bg-[#1a2d1a]' : 'hover:bg-[#1c2128]'}`}>
                 <div>
-                  <div className="text-[10px] font-medium text-[#e6edf3]">{site.name}</div>
-                  <div className="text-[8px] text-[#484f58]">{site.region} · {site.operator}</div>
+                  <div className="flex items-center gap-1.5">
+                    {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-[#3fb950] flex-shrink-0"></div>}
+                    <div className="text-[10px] font-medium text-[#e6edf3]">{site.name}</div>
+                  </div>
+                  <div className="text-[8px] text-[#484f58]">{site.region} - {site.operator}</div>
                 </div>
                 <div>
                   <div className="text-[10px] font-medium text-[#e6edf3]">{site.recovered}%</div>
                   <div className="mt-1 h-1 w-24 bg-[#21262d] rounded-full overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${site.recovered}%`,
-                        background: site.status === 'on-track' ? '#2ea043' : site.status === 'slow' ? '#d29922' : '#cf222e'
-                      }}
-                    ></div>
+                    <div className="h-full rounded-full" style={{ width: `${site.recovered}%`, background: site.status === 'on-track' ? '#2ea043' : site.status === 'slow' ? '#d29922' : '#cf222e' }}></div>
                   </div>
                 </div>
                 <div className={`text-[10px] font-medium ${diff >= 0 ? 'text-[#3fb950]' : 'text-[#f85149]'}`}>
@@ -218,16 +160,13 @@ Write in plain English. No jargon. Reference specific sites, dollar figures, and
                   {site.release}
                 </div>
                 <div>
-                  {site.alerts > 0 ? (
-                    <span className="text-[9px] bg-[#3d0000] text-[#f85149] px-1.5 py-0.5 rounded-full">{site.alerts}</span>
-                  ) : (
-                    <span className="text-[9px] text-[#484f58]">None</span>
-                  )}
+                  {site.alerts > 0
+                    ? <span className="text-[9px] bg-[#3d0000] text-[#f85149] px-1.5 py-0.5 rounded-full">{site.alerts}</span>
+                    : <span className="text-[9px] text-[#484f58]">None</span>
+                  }
                 </div>
                 <div>
-                  <span className={`text-[9px] px-2 py-0.5 rounded border font-medium ${style.badge}`}>
-                    {style.label}
-                  </span>
+                  <span className={`text-[9px] px-2 py-0.5 rounded border font-medium ${style.badge}`}>{style.label}</span>
                 </div>
               </div>
             )
@@ -238,17 +177,11 @@ Write in plain English. No jargon. Reference specific sites, dollar figures, and
           <div className="bg-[#161b22] border border-[#2ea043] rounded-lg p-4">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <div className="text-[12px] font-medium text-[#e6edf3]">Portfolio Compliance Report — June 2026</div>
-                <div className="text-[9px] text-[#484f58] mt-0.5">Generated by Claude · All WA sites</div>
+                <div className="text-[12px] font-medium text-[#e6edf3]">Portfolio Compliance Report - June 2026</div>
+                <div className="text-[9px] text-[#484f58] mt-0.5">Generated by Claude - All WA sites</div>
               </div>
-              <button
-                onClick={() => setShowReport(false)}
-                className="text-[9px] text-[#484f58] hover:text-[#e6edf3]"
-              >
-                ✕ Close
-              </button>
+              <button onClick={() => setShowReport(false)} className="text-[9px] text-[#484f58] hover:text-[#e6edf3]">Close</button>
             </div>
-
             {loading ? (
               <div className="text-[10px] text-[#3fb950]">Writing your compliance report...</div>
             ) : (
@@ -256,27 +189,24 @@ Write in plain English. No jargon. Reference specific sites, dollar figures, and
                 components={{
                   h1: ({children}) => <div className="text-[12px] font-semibold text-[#e6edf3] mb-2 mt-4">{children}</div>,
                   h2: ({children}) => <div className="text-[11px] font-semibold text-[#e6edf3] mb-2 mt-3">{children}</div>,
-                  h3: ({children}) => <div className="text-[10px] font-semibold text-[#c9d1d9] mb-1 mt-2">{children}</div>,
                   p: ({children}) => <p className="text-[10px] text-[#8b949e] leading-relaxed mb-2">{children}</p>,
                   strong: ({children}) => <span className="text-[#e6edf3] font-medium">{children}</span>,
                   ul: ({children}) => <ul className="mb-2 space-y-1 pl-3">{children}</ul>,
-                  li: ({children}) => <li className="text-[10px] text-[#8b949e] flex gap-2"><span className="text-[#3fb950] flex-shrink-0">·</span><span>{children}</span></li>,
+                  li: ({children}) => <li className="text-[10px] text-[#8b949e] flex gap-2"><span className="text-[#3fb950] flex-shrink-0">-</span><span>{children}</span></li>,
                 }}
               >
                 {report}
               </ReactMarkdown>
             )}
-
             <div className="mt-4 pt-3 border-t border-[#30363d] text-[8px] text-[#484f58] italic">
-              Generated by Claude AI · Based on Sentinel-2 satellite data and publicly available bond information · Not a substitute for formal regulatory assessment.
+              Generated by Claude AI - Based on Sentinel-2 satellite data and publicly available bond information - Not a substitute for formal regulatory assessment.
             </div>
           </div>
         )}
 
         <div className="text-[9px] text-[#484f58]">
-          Recovery data sourced from Sentinel-2 satellite imagery via Google Earth Engine. Bond values from publicly available company annual reports. Updated every 5 days after each satellite pass.
+          Recovery data from Sentinel-2 satellite imagery via Google Earth Engine. Bond values from publicly available company annual reports. Updated every 5 days after each satellite pass.
         </div>
-
       </div>
     </div>
   )

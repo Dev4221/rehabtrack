@@ -1,11 +1,21 @@
 import { useState, useEffect } from 'react'
 import Papa from 'papaparse'
-import {
-  LineChart, Line, BarChart, Bar, XAxis, YAxis,
-  Tooltip, ResponsiveContainer, ReferenceLine
-} from 'recharts'
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts'
+import { useSite } from '../SiteContext'
 
-const zones = ['All zones', 'Zone A1', 'Zone A2', 'Zone B1', 'Zone B2', 'Zone B3', 'Zone C1', 'Zone C2', 'Zone C3']
+const siteZones = {
+  'roy-hill': ['All zones', 'Zone A1', 'Zone A2', 'Zone B1', 'Zone B2', 'Zone B3', 'Zone C1', 'Zone C2', 'Zone C3'],
+  'cloudbreak': ['All zones', 'Zone A1', 'Zone A2', 'Zone B1', 'Zone B2', 'Zone C1'],
+  'brockman': ['All zones', 'Zone A1', 'Zone B1', 'Zone C1', 'Zone D2', 'Zone E1'],
+  'christmas-creek': ['All zones', 'Zone A1', 'Zone B1', 'Zone C1', 'Zone E1', 'Zone E3', 'Zone F2'],
+}
+
+const siteNdviOffset = {
+  'roy-hill': 0,
+  'cloudbreak': 0.08,
+  'brockman': -0.10,
+  'christmas-creek': -0.20,
+}
 
 const zoneOffsets = {
   'All zones': 0,
@@ -17,6 +27,10 @@ const zoneOffsets = {
   'Zone C1': -0.08,
   'Zone C2': -0.12,
   'Zone C3': -0.18,
+  'Zone D2': -0.15,
+  'Zone E1': -0.22,
+  'Zone E3': -0.18,
+  'Zone F2': -0.10,
 }
 
 const zoneColors = {
@@ -29,13 +43,46 @@ const zoneColors = {
   'Zone C1': '#f85149',
   'Zone C2': '#cf222e',
   'Zone C3': '#a40e26',
+  'Zone D2': '#f85149',
+  'Zone E1': '#a40e26',
+  'Zone E3': '#cf222e',
+  'Zone F2': '#d29922',
+}
+
+const siteEvents = {
+  'roy-hill': [
+    { date: 'Mar 2021', color: 'border-[#f85149] bg-[#3d0000]', title: 'Cyclone Ellie rainfall event', exec: '340mm of rain in 48 hours caused surface erosion. Vegetation recovered within 4 months.', tech: 'NDVI dropped to 0.22 (from baseline 0.38). Z-score: -3.1. Recovery observed within 4 months.' },
+    { date: 'Jun 2024', color: 'border-[#f85149] bg-[#3d0000]', title: 'Zone C3 vegetation loss', exec: 'Heavy rainfall caused vegetation loss across 14 hectares. Currently recovering.', tech: 'NDVI=0.12 in Zone C3 (baseline 0.30). Z-score: -2.8. Classifier: bare/disturbed. Confidence 91%.' },
+    { date: 'Jun 2026', color: 'border-[#2ea043] bg-[#1a3a1a]', title: 'Zone A1 milestone reached', exec: "Zone A1 reached 80% recovery - the government's threshold for bond release.", tech: 'Zone A1 NDVI mean 0.61 sustained above 0.35 for 3 consecutive months. Bond milestone confirmed.' },
+    { date: 'Jun 2026', color: 'border-[#e3b341] bg-[#2d2000]', title: 'Zone B2 weed signature', exec: 'Possible buffel grass detected in Zone B2. Ground inspection recommended.', tech: 'Spectral anomaly detected. Band ratio inconsistent with native Pilbara regrowth. Possible Cenchrus ciliaris.' },
+  ],
+  'cloudbreak': [
+    { date: 'Feb 2020', color: 'border-[#f85149] bg-[#3d0000]', title: 'Heavy rainfall erosion event', exec: 'Significant rainfall event caused surface erosion across 3 zones. Recovery was faster than expected.', tech: 'NDVI dropped from 0.48 to 0.31 site-wide. Recovery to baseline within 3 months.' },
+    { date: 'Mar 2026', color: 'border-[#2ea043] bg-[#1a3a1a]', title: 'Zone A1 milestone reached', exec: "Zone A1 reached 82% recovery - ahead of the government's threshold.", tech: 'Zone A1 NDVI mean 0.64 sustained above 0.35 for 4 consecutive months. Bond milestone confirmed.' },
+    { date: 'Jun 2026', color: 'border-[#2ea043] bg-[#1a3a1a]', title: 'Ahead of bond release schedule', exec: 'Cloudbreak is the best performing site in the portfolio - on track for Q1 2027 bond release.', tech: 'Site NDVI velocity +6.1%/yr. All zones above 0.35 threshold except C1. Projected release Q1 2027.' },
+  ],
+  'brockman': [
+    { date: 'Jan 2021', color: 'border-[#f85149] bg-[#3d0000]', title: 'Slow recovery identified in Zone D2', exec: 'Zone D2 was identified as significantly underperforming. Recovery rate is less than half the required pace.', tech: 'Zone D2 NDVI velocity +2.1%/yr vs site average +4.2%/yr. Projected milestone Q3 2031.' },
+    { date: 'Aug 2023', color: 'border-[#e3b341] bg-[#2d2000]', title: 'Replanting programme initiated', exec: 'A targeted replanting programme was started in Zone D2 to accelerate recovery. Results expected by 2025.', tech: 'Native seed mix applied across 120ha of Zone D2. Monitoring frequency increased to weekly.' },
+    { date: 'Jun 2026', color: 'border-[#e3b341] bg-[#2d2000]', title: 'Behind schedule - Q1 2029 release at risk', exec: 'Brockman 4 is recovering below the required annual target. Bond release may be delayed without intervention.', tech: 'Site NDVI velocity +4.2%/yr vs 6% target. Zone D2 remains critical at +2.1%/yr.' },
+  ],
+  'christmas-creek': [
+    { date: 'Mar 2022', color: 'border-[#f85149] bg-[#3d0000]', title: 'Major erosion event - Zone E3', exec: 'A severe rainfall event caused widespread erosion across 40 hectares in Zone E3. The damage has since spread to 95 hectares.', tech: 'NDVI dropped from 0.28 to 0.11 in Zone E3. Rill erosion pattern confirmed via satellite. Area now 95ha.' },
+    { date: 'Nov 2023', color: 'border-[#f85149] bg-[#3d0000]', title: 'Zone E1 critical status confirmed', exec: 'Zone E1 was formally classified as critical after 3 consecutive years of minimal recovery. Urgent intervention required.', tech: 'Zone E1 NDVI mean 0.08 - below early regrowth threshold. Annual velocity: +1.2%/yr. Projected milestone 2035+.' },
+    { date: 'Jun 2026', color: 'border-[#f85149] bg-[#3d0000]', title: 'Bond release significantly at risk', exec: 'Christmas Creek is the worst performing site in the portfolio. At current pace, the $41M bond will not be released until 2030 at the earliest.', tech: 'Site NDVI velocity +2.8%/yr. 3 zones below threshold. Projected release Q3 2030+.' },
+  ],
 }
 
 export default function Trends() {
+  const { selectedSite } = useSite()
   const [ndviData, setNdviData] = useState([])
   const [selectedZone, setSelectedZone] = useState('All zones')
   const [view, setView] = useState('executive')
   const [chartType, setChartType] = useState('line')
+
+  useEffect(() => {
+    setSelectedZone('All zones')
+  }, [selectedSite.id])
 
   useEffect(() => {
     Papa.parse('/data/ndvi_timeseries.csv', {
@@ -59,16 +106,19 @@ export default function Trends() {
     })
   }, [])
 
-  const offset = zoneOffsets[selectedZone] || 0
+  const siteOffset = siteNdviOffset[selectedSite.id] || 0
+  const zoneOffset = zoneOffsets[selectedZone] || 0
+  const totalOffset = siteOffset + zoneOffset
   const lineColor = zoneColors[selectedZone] || '#3fb950'
+  const zones = siteZones[selectedSite.id] || siteZones['roy-hill']
+  const events = siteEvents[selectedSite.id] || siteEvents['roy-hill']
 
   const chartData = ndviData.map(r => ({
     label: r.label,
-    score: Math.max(0, Math.min(1, r.mean_ndvi + offset)),
+    score: Math.max(0, Math.min(1, r.mean_ndvi + totalOffset)),
     recovering: r.area_recovering,
     early: r.area_early,
     bare: r.area_bare,
-    notes: r.notes,
   }))
 
   return (
@@ -76,7 +126,7 @@ export default function Trends() {
 
       <div className="h-10 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between px-4 flex-shrink-0">
         <div className="text-[10px] text-[#8b949e]">
-          Vegetation trends <span className="text-[#e6edf3]">/ Roy Hill / 2019–2026</span>
+          Vegetation trends <span className="text-[#e6edf3]">/ {selectedSite.name} / 2019-2026</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="bg-[#21262d] border border-[#30363d] rounded-full p-0.5 flex gap-0.5">
@@ -94,8 +144,8 @@ export default function Trends() {
 
         <div className="text-[10px] text-[#8b949e]">
           {view === 'executive'
-            ? 'This chart shows how vegetation coverage has changed across the site over time. Higher scores mean healthier, denser vegetation. The dotted line shows the target needed for bond release.'
-            : 'Monthly NDVI time-series for Roy Hill 2019–2026. Sentinel-2 Band 8 / Band 4 ratio. Reference line at 0.35 indicates rehabilitating threshold used by Random Forest classifier.'}
+            ? `This chart shows how vegetation coverage has changed across ${selectedSite.name} over time. Higher scores mean healthier, denser vegetation. The dotted line shows the target needed for bond release.`
+            : `Monthly NDVI time-series for ${selectedSite.name} 2019-2026. Sentinel-2 Band 8 / Band 4 ratio. Reference line at 0.35 indicates rehabilitating threshold used by Random Forest classifier.`}
         </div>
 
         <div className="flex gap-2 flex-wrap">
@@ -116,12 +166,12 @@ export default function Trends() {
 
         <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4 flex flex-col" style={{ height: 280 }}>
           <div className="text-[10px] font-medium text-[#e6edf3] mb-1">
-            {view === 'executive' ? 'Vegetation health over time' : 'NDVI time-series · 2019–2026'}
+            {view === 'executive' ? 'Vegetation health over time' : 'NDVI time-series - 2019-2026'}
           </div>
           <div className="text-[9px] text-[#484f58] mb-3">
-            {selectedZone} · Monthly · Sentinel-2
+            {selectedZone} - Monthly - Sentinel-2
             {selectedZone !== 'All zones' && (
-              <span className="ml-2 italic">· Estimated from site average. Per-zone satellite exports can be configured in the pipeline settings.</span>
+              <span className="ml-2 italic">- Estimated from site average. Per-zone satellite exports can be configured in the pipeline settings.</span>
             )}
           </div>
           <div className="flex-1 min-h-0">
@@ -176,18 +226,15 @@ export default function Trends() {
           <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
             <div className="text-[10px] font-medium text-[#e6edf3] mb-3">Notable events on this site</div>
             <div className="flex flex-col gap-2">
-              {[
-                { date: 'Mar 2021', color: 'border-[#f85149] bg-[#3d0000]', title: 'Cyclone Ellie rainfall event', desc: view === 'executive' ? '340mm of rain in 48 hours caused surface erosion. Vegetation recovered within 4 months.' : 'NDVI dropped to 0.22 (from baseline 0.38). Z-score: −3.1σ. Recovery observed within 4 months.' },
-                { date: 'Jun 2024', color: 'border-[#f85149] bg-[#3d0000]', title: 'Zone C3 vegetation loss', desc: view === 'executive' ? 'Heavy rainfall caused vegetation loss across 14 hectares. Currently recovering.' : 'NDVI=0.12 in Zone C3 (baseline 0.30). Z-score: −2.8σ. Classifier: bare/disturbed. Confidence 91%.' },
-                { date: 'Jun 2026', color: 'border-[#2ea043] bg-[#1a3a1a]', title: 'Zone A1 milestone reached', desc: view === 'executive' ? "Zone A1 reached 80% recovery — the government's threshold for bond release." : 'Zone A1 NDVI mean 0.61 sustained above 0.35 for 3 consecutive months. Bond milestone confirmed.' },
-                { date: 'Jun 2026', color: 'border-[#e3b341] bg-[#2d2000]', title: 'Zone B2 weed signature', desc: view === 'executive' ? 'Possible buffel grass detected in Zone B2. Ground inspection recommended.' : 'Spectral anomaly detected. Band ratio inconsistent with native Pilbara regrowth. Possible Cenchrus ciliaris.' },
-              ].map((event, i) => (
+              {events.map((event, i) => (
                 <div key={i} className={`border rounded px-3 py-2 ${event.color}`}>
                   <div className="flex items-center gap-2 mb-0.5">
                     <span className="text-[8px] text-[#484f58]">{event.date}</span>
                     <span className="text-[9px] font-medium text-[#e6edf3]">{event.title}</span>
                   </div>
-                  <div className="text-[8px] text-[#8b949e] leading-relaxed">{event.desc}</div>
+                  <div className="text-[8px] text-[#8b949e] leading-relaxed">
+                    {view === 'executive' ? event.exec : event.tech}
+                  </div>
                 </div>
               ))}
             </div>
