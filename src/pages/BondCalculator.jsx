@@ -1,11 +1,20 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ReferenceLine, ResponsiveContainer } from 'recharts'
+import { useSite } from '../SiteContext'
 
 export default function BondCalculator() {
-  const [bondValue, setBondValue] = useState(48000000)
-  const [currentPct, setCurrentPct] = useState(61)
-  const [growthRate, setGrowthRate] = useState(8.2)
+  const { selectedSite } = useSite()
+
+  const [bondValue, setBondValue] = useState(selectedSite.bond)
+  const [currentPct, setCurrentPct] = useState(selectedSite.recovered)
+  const [growthRate, setGrowthRate] = useState(selectedSite.growthRate)
   const [milestone, setMilestone] = useState(80)
+
+  useEffect(() => {
+    setBondValue(selectedSite.bond)
+    setCurrentPct(selectedSite.recovered)
+    setGrowthRate(selectedSite.growthRate)
+  }, [selectedSite.id])
 
   const yearsToTarget = (milestone - currentPct) / growthRate
   const releaseYear = 2026 + yearsToTarget
@@ -30,31 +39,30 @@ export default function BondCalculator() {
       ? `$${(val / 1000000).toFixed(1)}M`
       : `$${val.toLocaleString()}`
 
+  const delayQuarter = delayedReleaseYear % 1 < 0.25 ? 'Q1' : delayedReleaseYear % 1 < 0.5 ? 'Q2' : delayedReleaseYear % 1 < 0.75 ? 'Q3' : 'Q4'
+  const delayYearInt = Math.floor(delayedReleaseYear)
+
   return (
     <div className="flex flex-col h-full">
 
-      {/* Top bar */}
       <div className="h-10 bg-[#161b22] border-b border-[#30363d] flex items-center px-4 flex-shrink-0">
         <div className="text-[10px] text-[#8b949e]">
-          Bond calculator <span className="text-[#e6edf3]">/ Roy Hill</span>
+          Bond calculator <span className="text-[#e6edf3]">/ {selectedSite.name}</span>
         </div>
       </div>
 
       <div className="flex-1 overflow-auto p-4">
 
-        {/* Explainer */}
         <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4 mb-4 text-[10px] text-[#8b949e] leading-relaxed">
-          The rehabilitation bond is money lodged with the WA government as a guarantee that the land will be properly restored. Once the government confirms the rehabilitation is complete, the full amount is returned. Use this calculator to see when that is likely to happen — and what it means for your capital.
+          The rehabilitation bond is money lodged with the WA government as a guarantee that the land will be properly restored. Once the government confirms the rehabilitation is complete, the full amount is returned. Use this calculator to see when that is likely to happen - and what it means for your capital.
         </div>
 
         <div className="grid grid-cols-2 gap-4">
 
-          {/* Left — inputs */}
           <div className="flex flex-col gap-4">
 
-            {/* Inputs */}
             <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
-              <div className="text-[11px] font-medium text-[#e6edf3] mb-4">Site inputs</div>
+              <div className="text-[11px] font-medium text-[#e6edf3] mb-4">Site inputs - {selectedSite.name}</div>
               <div className="grid grid-cols-2 gap-3">
                 {[
                   { label: 'Bond value ($AUD)', value: bondValue, set: setBondValue, step: 1000000, format: formatCurrency },
@@ -68,7 +76,7 @@ export default function BondCalculator() {
                       <button
                         onClick={() => input.set(v => Math.max(0, parseFloat((v - input.step).toFixed(1))))}
                         className="w-6 h-6 bg-[#21262d] border border-[#30363d] rounded text-[#8b949e] text-xs flex items-center justify-center"
-                      >−</button>
+                      >-</button>
                       <div className="flex-1 bg-[#0d1117] border border-[#30363d] rounded px-2 py-1.5 text-[10px] text-[#e6edf3] text-center">
                         {input.format ? input.format(input.value) : `${input.value}${input.suffix || ''}`}
                       </div>
@@ -82,7 +90,6 @@ export default function BondCalculator() {
               </div>
             </div>
 
-            {/* Scenarios */}
             <div className="grid grid-cols-3 gap-3">
               <div className="bg-[#1a2d1a] border border-[#2ea043] rounded-lg p-3">
                 <div className="text-[8px] text-[#68d391] mb-2">If recovery continues at current rate</div>
@@ -91,9 +98,7 @@ export default function BondCalculator() {
               </div>
               <div className="bg-[#2d2000] border border-[#e3b341] rounded-lg p-3">
                 <div className="text-[8px] text-[#fde68a] mb-2">If recovery rate halves</div>
-                <div className="text-[18px] font-medium text-[#e3b341]">
-                  {delayedReleaseYear % 1 < 0.25 ? 'Q1' : delayedReleaseYear % 1 < 0.5 ? 'Q2' : delayedReleaseYear % 1 < 0.75 ? 'Q3' : 'Q4'} {Math.floor(delayedReleaseYear)}
-                </div>
+                <div className="text-[18px] font-medium text-[#e3b341]">{delayQuarter} {delayYearInt}</div>
                 <div className="text-[8px] text-[#fde68a] mt-1">Significant delay</div>
               </div>
               <div className="bg-[#1c2128] border border-[#30363d] rounded-lg p-3">
@@ -103,7 +108,6 @@ export default function BondCalculator() {
               </div>
             </div>
 
-            {/* Plain English explanation */}
             <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4">
               <div className="text-[10px] font-medium text-[#e6edf3] mb-2">What this means</div>
               <div className="text-[10px] text-[#8b949e] leading-relaxed">
@@ -112,16 +116,15 @@ export default function BondCalculator() {
             </div>
           </div>
 
-          {/* Right — chart */}
           <div className="bg-[#161b22] border border-[#30363d] rounded-lg p-4 flex flex-col">
             <div className="text-[11px] font-medium text-[#e6edf3] mb-1">Projected recovery path</div>
-            <div className="text-[9px] text-[#484f58] mb-4">Current rate vs slower scenario</div>
+            <div className="text-[9px] text-[#484f58] mb-4">Current rate vs slower scenario - {selectedSite.name}</div>
 
             <div className="flex-1 min-h-0">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -10 }}>
                   <XAxis dataKey="year" tick={{ fontSize: 8, fill: '#484f58' }} />
-                  <YAxis tick={{ fontSize: 8, fill: '#484f58' }} domain={[currentPct - 5, 100]} />
+                  <YAxis tick={{ fontSize: 8, fill: '#484f58' }} domain={[Math.max(0, currentPct - 5), 100]} />
                   <Tooltip
                     contentStyle={{ background: '#161b22', border: '1px solid #30363d', borderRadius: 4, fontSize: 10 }}
                     formatter={(val, name) => [`${val.toFixed(1)}%`, name === 'current' ? 'Current rate' : 'Slower rate']}
