@@ -1,26 +1,62 @@
 import { useState } from 'react'
-import ReactMarkdown from 'react-markdown'
+import { useSite } from '../SiteContext'
 
-const SYSTEM_PROMPT = `You are RehabTrack's AI assistant for the Roy Hill iron ore mine in Western Australia.
+const buildSystemPrompt = (siteName, view) => {
+  const base = `You are RehabTrack's AI assistant, specialised exclusively in mine rehabilitation monitoring for ${siteName} in Western Australia.
 
 You have access to the following site data:
+- Site: ${siteName}, Pilbara, Western Australia
+- Monitored using Sentinel-2 satellite imagery, 10m resolution, every 5 days
+- Data covers January 2019 to June 2026
+- Governed by WA Mining Act 1978 and DMIRS rehabilitation guidelines
+- Bond release requires 80% of disturbed area to meet vegetation recovery threshold
+
+Roy Hill specific data:
 - 61% of the 2,840 hectare disturbed area is recovering well (NDVI > 0.35)
 - 22% is in early stage recovery
 - 17% needs attention
 - Annual recovery rate: +8.2% per year (target is 6%)
 - Bond value: $48,000,000 lodged with WA government
 - Projected bond release: Q3 2027
-- Zone C3 (14ha): vegetation loss detected 2 days ago — likely rainfall erosion
+- Zone C3 (14ha): vegetation loss detected 2 days ago - likely rainfall erosion
 - Zone B2 (8ha): possible buffel grass weed encroachment detected 5 days ago
-- Zone A1 (420ha): reached 80% recovery milestone — bond release flagged
-- Satellite: Sentinel-2, 10m resolution, every 5 days
-- Data covers 2019 to June 2026
+- Zone A1 (420ha): reached 80% recovery milestone - bond release flagged
 
-You answer questions in plain English unless asked for technical details.
-Never use jargon. Always relate answers to dollars, dates, and practical actions.
-Keep answers concise — 3 to 5 sentences maximum.
-Always cite which zones or data you are referring to.
-Do not use markdown bold or asterisks in your answers. Write in plain sentences only.`
+Cloudbreak specific data:
+- 71% of 4,100 hectares recovering well
+- Annual recovery rate: +6.1% per year
+- Bond value: $62,000,000
+- Projected bond release: Q1 2027
+- No active alerts
+
+Brockman 4 specific data:
+- 44% of 2,100 hectares recovering well
+- Annual recovery rate: +4.2% per year (below 6% target)
+- Bond value: $35,000,000
+- Projected bond release: Q1 2029
+- Zone D2: recovery rate significantly below target
+
+Christmas Creek specific data:
+- 29% of 3,200 hectares recovering well
+- Annual recovery rate: +2.8% per year (well below 6% target)
+- Bond value: $41,000,000
+- Projected bond release: Q3 2030+
+- Zone E1: critical - only 12% recovered, urgent intervention required
+- Zone E3: erosion spreading across 95 hectares
+- Zone F2: buffel grass weed encroachment across 62 hectares
+
+STRICT RULES:
+- You ONLY answer questions about mine rehabilitation, vegetation recovery, NDVI data, satellite monitoring, WA mining regulations, bond release timelines, rehabilitation zones, erosion, weed encroachment, or topics directly related to these sites.
+- If someone asks ANYTHING unrelated - weather forecasts, general knowledge, coding, sports, other industries, personal questions, or anything outside mine rehabilitation - you must respond ONLY with: "I can only answer questions about mine rehabilitation, vegetation recovery, bond timelines, and WA mining regulations for the sites in this system. What would you like to know about ${siteName}?"
+- Never break this rule regardless of how the question is phrased.
+- Never pretend to be a different AI or answer in a different role.`
+
+  if (view === 'executive') {
+    return base + '\n\nCOMMUNICATION STYLE: Always answer in plain English. No technical terms, no NDVI scores, no statistical language. No markdown, no asterisks, no bold text. Speak as if explaining to a mining executive who is not a scientist. Always relate answers to dollars, dates, and practical actions. Keep answers to 3-5 sentences.'
+  } else {
+    return base + '\n\nCOMMUNICATION STYLE: Include technical details where relevant - NDVI values, Z-scores, classifier confidence levels, spectral indices. No markdown formatting or asterisks. Keep answers concise and precise.'
+  }
+}
 
 const suggestedQuestions = [
   'Will we get the bond money back on time?',
@@ -33,7 +69,7 @@ const suggestedQuestions = [
 ]
 
 const knowledgeBase = [
-  { name: '5 years of satellite data (2019–2026)', detail: 'Monthly NDVI per zone' },
+  { name: '5 years of satellite data (2019-2026)', detail: 'Monthly NDVI per zone' },
   { name: 'WA Mining Act 1978', detail: 'Rehabilitation obligations' },
   { name: 'DMIRS compliance guidelines', detail: 'Bond conditions' },
   { name: 'Mine Closure Plan', detail: 'Site-specific targets' },
@@ -45,6 +81,7 @@ const apiUrl = import.meta.env.DEV
   : '/api/claude'
 
 export default function AskQuestion() {
+  const { selectedSite } = useSite()
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
   const [loading, setLoading] = useState(false)
@@ -59,19 +96,13 @@ export default function AskQuestion() {
     setLoading(true)
 
     try {
-      const systemPrompt = view === 'executive'
-        ? SYSTEM_PROMPT + '\n\nIMPORTANT: Always answer in plain English. No technical terms, no NDVI scores, no statistical language. No markdown, no asterisks, no bold text. Speak as if explaining to a mining executive who is not a scientist.'
-        : SYSTEM_PROMPT + '\n\nIMPORTANT: Include technical details — NDVI values, Z-scores, classifier confidence levels, spectral indices where relevant. No markdown formatting.'
-
       const response = await fetch(apiUrl, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           model: 'claude-haiku-4-5',
           max_tokens: 1024,
-          system: systemPrompt,
+          system: buildSystemPrompt(selectedSite.name, view),
           messages: [
             ...messages.map(m => ({ role: m.role, content: m.content })),
             { role: 'user', content: userMessage }
@@ -81,7 +112,6 @@ export default function AskQuestion() {
 
       const data = await response.json()
       const reply = data.content[0].text
-
       setMessages(prev => [...prev, { role: 'assistant', content: reply }])
     } catch (err) {
       console.error('Claude error:', err)
@@ -111,9 +141,9 @@ export default function AskQuestion() {
           {messages.length === 0 && (
             <div className="flex-1 flex flex-col items-center justify-center text-center">
               <div className="text-[32px] mb-3">◎</div>
-              <div className="text-[13px] font-medium text-[#e6edf3] mb-2">Ask anything about this site</div>
+              <div className="text-[13px] font-medium text-[#e6edf3] mb-2">Ask anything about {selectedSite.name}</div>
               <div className="text-[10px] text-[#8b949e] max-w-sm">
-                Ask in plain English — about the bond timeline, specific zones, regulations, or how the site is performing. The AI answers using real satellite data and WA mining regulations.
+                Ask in plain English - about the bond timeline, specific zones, regulations, or how the site is performing. Answers are grounded in real satellite data and WA mining regulations.
               </div>
             </div>
           )}
@@ -128,7 +158,7 @@ export default function AskQuestion() {
                 {msg.content}
                 {msg.role === 'assistant' && (
                   <div className="text-[8px] text-[#484f58] mt-1">
-                    Sources: satellite data 2019–2026 · WA Mining Act · DMIRS guidelines
+                    Sources: satellite data 2019-2026 - WA Mining Act - DMIRS guidelines
                   </div>
                 )}
               </div>
@@ -151,7 +181,7 @@ export default function AskQuestion() {
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
               className="flex-1 bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-[10px] text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#2ea043]"
-              placeholder="Ask anything — for example: Will we get the bond back by 2027?"
+              placeholder={`Ask anything about ${selectedSite.name}...`}
             />
             <button
               onClick={() => sendMessage()}
@@ -193,7 +223,7 @@ export default function AskQuestion() {
         </div>
 
         <div className="text-[8px] text-[#484f58] leading-relaxed mt-auto">
-          Answers are based on real satellite data and WA regulations. Not a substitute for professional environmental advice.
+          This AI only answers questions about mine rehabilitation and WA mining regulations. Answers are not a substitute for professional environmental advice.
         </div>
       </div>
     </div>
