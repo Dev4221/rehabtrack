@@ -1,24 +1,24 @@
 import { NavLink } from 'react-router-dom'
 import { useSite } from '../SiteContext'
 
-const navItems = [
-  { section: 'Monitoring' },
-  { path: '/', icon: '⊞', label: 'Overview' },
-  { path: '/map', icon: '⊕', label: 'Site map' },
-  { path: '/trends', icon: '◈', label: 'Vegetation trends' },
-  { path: '/alerts', icon: '◉', label: 'Alerts', badge: '3', badgeRed: true },
-  { section: 'AI tools' },
-  { path: '/ask', icon: '◎', label: 'Ask a question', badge: 'AI' },
-  { path: '/report', icon: '◧', label: 'Generate report', badge: 'AI' },
-  { path: '/scenario', icon: '◑', label: 'Scenario planner', badge: 'AI' },
-  { path: '/agents', icon: '◈', label: 'Agent activity', badge: 'AI' },
-  { section: 'Finance' },
-  { path: '/bond', icon: '◉', label: 'Bond calculator' },
-  { path: '/compliance', icon: '◫', label: 'Compliance tracker' },
-]
-
 export default function Sidebar() {
   const { selectedSite, setSelectedSite, sites } = useSite()
+
+  const navItems = [
+    { section: 'Monitoring' },
+    { path: '/', icon: '⊞', label: 'Overview' },
+    { path: '/map', icon: '⊕', label: 'Site map' },
+    { path: '/trends', icon: '◈', label: 'Vegetation trends' },
+    { path: '/alerts', icon: '◉', label: 'Alerts', badge: selectedSite.alerts > 0 ? `${selectedSite.alerts}` : null, badgeRed: true },
+    { section: 'AI tools' },
+    { path: '/ask', icon: '◎', label: 'Ask a question', badge: 'AI' },
+    { path: '/report', icon: '◧', label: 'Generate report', badge: 'AI' },
+    { path: '/scenario', icon: '◑', label: 'Scenario planner', badge: 'AI' },
+    { path: '/agents', icon: '◈', label: 'Agent activity', badge: 'AI' },
+    { section: 'Finance' },
+    { path: '/bond', icon: '◉', label: 'Bond calculator' },
+    { path: '/compliance', icon: '◫', label: 'Compliance tracker' },
+  ]
 
   return (
     <div className="w-48 bg-[#161b22] border-r border-[#30363d] flex flex-col flex-shrink-0">
