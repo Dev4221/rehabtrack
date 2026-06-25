@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSite } from '../SiteContext'
 
 const siteLogEntries = {
@@ -48,7 +48,7 @@ const siteLogEntries = {
     { time: '09:14:13', agent: 'Watcher', color: 'text-[#f85149]', message: 'CRITICAL: Zone E1 - NDVI 0.08 - 5th consecutive month below threshold - escalating to Analyst' },
     { time: '09:14:14', agent: 'Watcher', color: 'text-[#f85149]', message: 'PROBLEM DETECTED: Zone E3 - erosion spreading - area now 95ha vs 40ha last month - escalating to Analyst' },
     { time: '09:14:15', agent: 'Watcher', color: 'text-[#e3b341]', message: 'PROBLEM DETECTED: Zone F2 - spectral anomaly consistent with weed encroachment - escalating to Analyst' },
-    { time: '09:14:16', agent: 'Analyst', color: 'text-[#e3b341]', message: 'Received 3 flagged zones - this is the highest alert count for this site in 12 months' },
+    { time: '09:14:16', agent: 'Analyst', color: 'text-[#e3b341]', message: 'Received 3 flagged zones - highest alert count for this site in 12 months' },
     { time: '09:14:19', agent: 'Analyst', color: 'text-[#f85149]', message: 'Zone E1: Critical - NDVI 0.08 vs 0.35 threshold. Projected milestone 2035+. Urgent intervention required.' },
     { time: '09:14:22', agent: 'Analyst', color: 'text-[#f85149]', message: 'Zone E3: Erosion spreading at 55ha/month rate. Rill formation confirmed. Erosion control works urgent.' },
     { time: '09:14:25', agent: 'Analyst', color: 'text-[#e3b341]', message: 'Zone F2: Spectral match 83% Cenchrus ciliaris (buffel grass). Reportable under MCP s.4.2. Ground inspection required.' },
@@ -70,51 +70,88 @@ export default function AgentActivity() {
   const { selectedSite } = useSite()
   const [running, setRunning] = useState(false)
   const [showLog, setShowLog] = useState(true)
+  const [visibleEntries, setVisibleEntries] = useState([])
+  const [isSimulating, setIsSimulating] = useState(false)
+  const logRef = useRef(null)
+  const timerRef = useRef(null)
 
-  const logEntries = siteLogEntries[selectedSite.id] || siteLogEntries['roy-hill']
+  const allEntries = siteLogEntries[selectedSite.id] || siteLogEntries['roy-hill']
   const stats = siteAgentStats[selectedSite.id] || siteAgentStats['roy-hill']
   const problemColor = parseInt(stats.problems) === 0 ? 'text-[#3fb950]' : parseInt(stats.problems) >= 3 ? 'text-[#f85149]' : 'text-[#e3b341]'
+
+  useEffect(() => {
+    setVisibleEntries(allEntries)
+    setRunning(false)
+    setIsSimulating(false)
+    if (timerRef.current) clearTimeout(timerRef.current)
+  }, [selectedSite.id])
+
+  useEffect(() => {
+    if (logRef.current) {
+      logRef.current.scrollTop = logRef.current.scrollHeight
+    }
+  }, [visibleEntries])
+
+  const runAgents = () => {
+    if (isSimulating) return
+    setRunning(true)
+    setIsSimulating(true)
+    setShowLog(true)
+    setVisibleEntries([])
+
+    allEntries.forEach((entry, i) => {
+      timerRef.current = setTimeout(() => {
+        setVisibleEntries(prev => [...prev, entry])
+        if (i === allEntries.length - 1) {
+          setTimeout(() => {
+            setRunning(false)
+            setIsSimulating(false)
+          }, 1000)
+        }
+      }, i * 900)
+    })
+  }
 
   const agents = [
     {
       name: 'Watcher',
       color: 'border-[#2ea043]',
-      dotColor: 'bg-[#3fb950]',
+      dotColor: running ? 'bg-[#3fb950] animate-pulse' : 'bg-[#3fb950]',
       badgeColor: 'bg-[#1a3a1a] text-[#3fb950]',
-      status: 'Active',
+      status: running ? 'Running...' : 'Active',
       desc: `Checks the satellite data every day. Looks at vegetation levels across all ${stats.zones} zones at ${selectedSite.name} and flags anything that has changed unusually compared to the same time last year.`,
       stats: [
-        { label: 'Zones checked today', value: stats.zones },
-        { label: 'Problems flagged', value: stats.problems, valueColor: problemColor },
-        { label: 'Mean NDVI score', value: stats.ndvi },
+        { label: 'Zones checked today', value: running ? '...' : stats.zones },
+        { label: 'Problems flagged', value: running ? '...' : stats.problems, valueColor: problemColor },
+        { label: 'Mean NDVI score', value: running ? '...' : stats.ndvi },
       ],
       tools: ['Google Earth Engine', 'scikit-learn', 'Python'],
     },
     {
       name: 'Analyst',
       color: 'border-[#d29922]',
-      dotColor: 'bg-[#e3b341]',
+      dotColor: running ? 'bg-[#e3b341] animate-pulse' : 'bg-[#e3b341]',
       badgeColor: 'bg-[#2d2000] text-[#e3b341]',
-      status: 'Active',
+      status: running ? 'Running...' : 'Active',
       desc: 'Takes the problems flagged by the Watcher and works out what caused them. It searches through 5 years of historical data and WA mining regulations to explain what is happening and how serious it is.',
       stats: [
-        { label: 'Problems analysed', value: stats.problems },
-        { label: 'Knowledge base searches', value: stats.searches },
-        { label: 'Average confidence', value: stats.confidence, valueColor: 'text-[#e3b341]' },
+        { label: 'Problems analysed', value: running ? '...' : stats.problems },
+        { label: 'Knowledge base searches', value: running ? '...' : stats.searches },
+        { label: 'Average confidence', value: running ? '...' : stats.confidence, valueColor: 'text-[#e3b341]' },
       ],
       tools: ['Claude AI', 'FAISS knowledge base', 'WA Mining Act'],
     },
     {
       name: 'Reporter',
       color: 'border-[#1f6feb]',
-      dotColor: 'bg-[#58a6ff]',
+      dotColor: running ? 'bg-[#58a6ff] animate-pulse' : 'bg-[#58a6ff]',
       badgeColor: 'bg-[#0d2a4a] text-[#58a6ff]',
-      status: 'Active',
+      status: running ? 'Running...' : 'Active',
       desc: 'Takes the findings and does three things: updates this dashboard with the new alerts, recalculates the bond release forecast, and sends an email to the site manager with a plain-English summary.',
       stats: [
-        { label: 'Dashboard updates', value: stats.updates },
-        { label: 'Emails sent', value: stats.emails },
-        { label: 'Bond forecast', value: 'Recalculated', valueColor: 'text-[#3fb950]' },
+        { label: 'Dashboard updates', value: running ? '...' : stats.updates },
+        { label: 'Emails sent', value: running ? '...' : stats.emails },
+        { label: 'Bond forecast', value: running ? '...' : 'Recalculated', valueColor: 'text-[#3fb950]' },
       ],
       tools: ['Claude AI', 'Email', 'React state'],
     },
@@ -132,10 +169,15 @@ export default function AgentActivity() {
             Last run: today 09:14 AWST - Next: tomorrow 09:14 AWST
           </div>
           <button
-            onClick={() => setRunning(r => !r)}
-            className="bg-[#1a3a1a] border border-[#2ea043] rounded px-3 py-1 text-[9px] text-[#3fb950]"
+            onClick={runAgents}
+            disabled={isSimulating}
+            className={`border rounded px-3 py-1 text-[9px] transition-colors ${
+              isSimulating
+                ? 'bg-[#1c2128] border-[#30363d] text-[#484f58] cursor-not-allowed'
+                : 'bg-[#1a3a1a] border-[#2ea043] text-[#3fb950] hover:bg-[#1f4d1f]'
+            }`}
           >
-            {running ? 'Running...' : 'Run agents now'}
+            {isSimulating ? 'Agents running...' : 'Run agents now'}
           </button>
         </div>
       </div>
@@ -143,7 +185,7 @@ export default function AgentActivity() {
       <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
 
         <div className="text-[10px] text-[#8b949e]">
-          RehabTrack uses three AI agents that work together automatically every day - no one needs to trigger them. This page shows what they found at {selectedSite.name} during today's run.
+          RehabTrack uses three AI agents that work together automatically every day - no one needs to trigger them. This page shows what they found at {selectedSite.name} during today's run. Click "Run agents now" to watch a live run.
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -179,20 +221,33 @@ export default function AgentActivity() {
             className="flex items-center justify-between px-4 py-2.5 border-b border-[#30363d] cursor-pointer"
             onClick={() => setShowLog(v => !v)}
           >
-            <div className="text-[10px] font-medium text-[#e6edf3]">
-              Today's activity log - 09:14 AWST - {selectedSite.name}
+            <div className="flex items-center gap-2">
+              <div className="text-[10px] font-medium text-[#e6edf3]">
+                {isSimulating ? 'Live run in progress...' : "Today's activity log"} - 09:14 AWST - {selectedSite.name}
+              </div>
+              {isSimulating && <div className="w-1.5 h-1.5 rounded-full bg-[#3fb950] animate-pulse"></div>}
             </div>
             <span className="text-[9px] text-[#484f58]">{showLog ? '▲ hide' : '▼ show'}</span>
           </div>
+
           {showLog && (
-            <div className="p-4 flex flex-col gap-1.5 font-mono">
-              {logEntries.map((entry, i) => (
+            <div ref={logRef} className="p-4 flex flex-col gap-1.5 font-mono max-h-64 overflow-auto">
+              {visibleEntries.length === 0 && isSimulating && (
+                <div className="text-[9px] text-[#484f58]">Initialising agents...</div>
+              )}
+              {visibleEntries.map((entry, i) => (
                 <div key={i} className="flex gap-3 text-[9px]">
                   <span className="text-[#484f58] flex-shrink-0">{entry.time}</span>
                   <span className={`flex-shrink-0 font-medium ${entry.color}`}>[{entry.agent}]</span>
                   <span className="text-[#8b949e]">{entry.message}</span>
                 </div>
               ))}
+              {isSimulating && visibleEntries.length > 0 && (
+                <div className="flex gap-3 text-[9px]">
+                  <span className="text-[#484f58] flex-shrink-0">...</span>
+                  <span className="text-[#484f58] animate-pulse">processing</span>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -208,7 +263,7 @@ export default function AgentActivity() {
               { name: 'Reporter', color: 'bg-[#0d2a4a] text-[#58a6ff] border-[#1f6feb]', desc: 'Updates dashboard - emails manager' },
             ].map((item, i) => (
               item.arrow ? (
-                <div key={i} className="text-[#484f58] text-lg flex-shrink-0">-&gt;</div>
+                <div key={i} className="text-[#484f58] text-lg flex-shrink-0">→</div>
               ) : (
                 <div key={i} className={`flex-1 border rounded-lg px-3 py-2 text-center ${item.color}`}>
                   <div className="text-[10px] font-medium mb-0.5">{item.name}</div>
