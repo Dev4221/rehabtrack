@@ -45,6 +45,10 @@ Regulatory context:
 - Weed encroachment must be treated before bond release verification
 `
 
+const apiUrl = import.meta.env.DEV
+  ? 'http://localhost:3001/api/claude'
+  : '/api/claude'
+
 export default function GenerateReport() {
   const [reportType, setReportType] = useState('compliance')
   const [tone, setTone] = useState('plain')
@@ -74,7 +78,7 @@ ${tone === 'plain'
 Keep each section to 2-3 sentences. Be specific — reference actual zones, percentages, and dollar figures from the data provided. Do not use markdown headers with # symbols. Use plain section titles like "Current Status" followed by a line break.`
 
     try {
-      const response = await fetch('http://localhost:3001/api/claude', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

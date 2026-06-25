@@ -38,6 +38,10 @@ const knowledgeBase = [
   { name: 'MinRes Annual Report 2024', detail: 'Bond values' },
 ]
 
+const apiUrl = import.meta.env.DEV
+  ? 'http://localhost:3001/api/claude'
+  : '/api/claude'
+
 export default function AskQuestion() {
   const [messages, setMessages] = useState([])
   const [input, setInput] = useState('')
@@ -57,7 +61,7 @@ export default function AskQuestion() {
         ? SYSTEM_PROMPT + '\n\nIMPORTANT: Always answer in plain English. No technical terms, no NDVI scores, no statistical language. Speak as if explaining to a mining executive who is not a scientist.'
         : SYSTEM_PROMPT + '\n\nIMPORTANT: Include technical details — NDVI values, Z-scores, classifier confidence levels, spectral indices where relevant.'
 
-      const response = await fetch('http://localhost:3001/api/claude', {
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
