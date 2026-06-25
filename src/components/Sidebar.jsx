@@ -10,6 +10,7 @@ const navItems = [
   { section: 'AI tools' },
   { path: '/ask', icon: '◎', label: 'Ask a question', badge: 'AI' },
   { path: '/report', icon: '◧', label: 'Generate report', badge: 'AI' },
+  { path: '/scenario', icon: '◑', label: 'Scenario planner', badge: 'AI' },
   { path: '/agents', icon: '◈', label: 'Agent activity', badge: 'AI' },
   { section: 'Finance' },
   { path: '/bond', icon: '◉', label: 'Bond calculator' },
@@ -34,7 +35,7 @@ export default function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 py-2">
+      <nav className="flex-1 py-2 overflow-y-auto">
         {navItems.map((item, i) => {
           if (item.section) {
             return (

@@ -9,6 +9,7 @@ import Compliance from './pages/Compliance'
 import AgentActivity from './pages/AgentActivity'
 import Trends from './pages/Trends'
 import SiteMap from './pages/SiteMap'
+import ScenarioPlanner from './pages/ScenarioPlanner'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
             <Route path="/agents" element={<AgentActivity />} />
             <Route path="/trends" element={<Trends />} />
             <Route path="/map" element={<SiteMap />} />
+            <Route path="/scenario" element={<ScenarioPlanner />} />
           </Routes>
         </main>
       </div>
