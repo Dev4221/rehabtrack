@@ -6,7 +6,7 @@ const sites = [
   {
     id: 'roy-hill',
     name: 'Roy Hill',
-    label: 'Roy Hill — Pilbara',
+    label: 'Roy Hill - Pilbara',
     operator: 'Roy Hill Holdings',
     region: 'Pilbara, WA',
     recovered: 61,
@@ -22,7 +22,7 @@ const sites = [
   {
     id: 'cloudbreak',
     name: 'Cloudbreak',
-    label: 'Cloudbreak — Pilbara',
+    label: 'Cloudbreak - Pilbara',
     operator: 'Fortescue Metals',
     region: 'Pilbara, WA',
     recovered: 71,
@@ -38,7 +38,7 @@ const sites = [
   {
     id: 'brockman',
     name: 'Brockman 4',
-    label: 'Brockman 4 — Pilbara',
+    label: 'Brockman 4 - Pilbara',
     operator: 'Rio Tinto',
     region: 'Pilbara, WA',
     recovered: 44,
@@ -54,7 +54,7 @@ const sites = [
   {
     id: 'christmas-creek',
     name: 'Christmas Creek',
-    label: 'Christmas Creek — Pilbara',
+    label: 'Christmas Creek - Pilbara',
     operator: 'Fortescue Metals',
     region: 'Pilbara, WA',
     recovered: 29,
@@ -71,9 +71,32 @@ const sites = [
 
 export function SiteProvider({ children }) {
   const [selectedSite, setSelectedSite] = useState(sites[0])
+  const [reportAlerts, setReportAlerts] = useState([])
+
+  const addAlertToReport = (alert, siteName) => {
+    const key = `${siteName}-${alert.id}`
+    setReportAlerts(prev => {
+      if (prev.find(a => a.key === key)) return prev
+      return [...prev, { ...alert, key, siteName }]
+    })
+  }
+
+  const removeAlertFromReport = (key) => {
+    setReportAlerts(prev => prev.filter(a => a.key !== key))
+  }
+
+  const clearReportAlerts = () => setReportAlerts([])
 
   return (
-    <SiteContext.Provider value={{ selectedSite, setSelectedSite, sites }}>
+    <SiteContext.Provider value={{
+      selectedSite,
+      setSelectedSite,
+      sites,
+      reportAlerts,
+      addAlertToReport,
+      removeAlertFromReport,
+      clearReportAlerts,
+    }}>
       {children}
     </SiteContext.Provider>
   )

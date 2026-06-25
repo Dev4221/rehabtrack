@@ -49,7 +49,7 @@ const apiUrl = import.meta.env.DEV
   : '/api/claude'
 
 export default function GenerateReport() {
-  const { selectedSite } = useSite()
+  const { selectedSite, reportAlerts, clearReportAlerts } = useSite()
   const [reportType, setReportType] = useState('compliance')
   const [tone, setTone] = useState('plain')
   const [reports, setReports] = useState({ plain: '', technical: '' })
@@ -57,14 +57,19 @@ export default function GenerateReport() {
   const [hasGenerated, setHasGenerated] = useState(false)
 
   const siteInfo = siteDataMap[selectedSite.id] || siteDataMap['roy-hill']
+  const siteReportAlerts = reportAlerts.filter(a => a.siteName === siteInfo.name)
 
-  // Reset when site or report type changes
   useEffect(() => {
     setReports({ plain: '', technical: '' })
     setHasGenerated(false)
   }, [selectedSite.id, reportType])
 
-  const getSiteData = () => `
+  const getSiteData = () => {
+    const queuedAlertsText = siteReportAlerts.length > 0
+      ? `\nAdditional alerts flagged for this report:\n${siteReportAlerts.map(a => `- ${a.title} (${a.area}): ${a.exec}`).join('\n')}`
+      : ''
+
+    return `
 ${siteInfo.name} - Rehabilitation Status Report
 Operator: ${siteInfo.operator} - ${siteInfo.region}
 Total area: ${siteInfo.area.toLocaleString()} hectares - Monitoring period: January 2019 to June 2026
@@ -80,12 +85,14 @@ ${siteInfo.zones}
 
 Active alerts:
 ${siteInfo.alerts}
+${queuedAlertsText}
 
 Regulatory context:
 - Governed by WA Mining Act 1978 and DMIRS rehabilitation guidelines
 - Bond release requires 80% of disturbed area to meet vegetation recovery threshold
 - Weed encroachment must be treated before bond release verification
 `
+  }
 
   const generateBothVersions = async () => {
     setLoading(true)
@@ -171,7 +178,7 @@ Keep each section to 2-3 sentences. Be specific - reference actual zones, percen
   return (
     <div className="flex h-full">
 
-      <div className="w-64 bg-[#161b22] border-r border-[#30363d] p-4 flex flex-col gap-4 flex-shrink-0">
+      <div className="w-64 bg-[#161b22] border-r border-[#30363d] p-4 flex flex-col gap-4 flex-shrink-0 overflow-y-auto">
         <div>
           <div className="text-[12px] font-medium text-[#e6edf3] mb-1">Generate a site report</div>
           <div className="text-[9px] text-[#8b949e]">Claude writes both plain English and technical versions at once. Switch between them instantly.</div>
@@ -183,6 +190,31 @@ Keep each section to 2-3 sentences. Be specific - reference actual zones, percen
             {siteInfo.name} - {selectedSite.region}
           </div>
         </div>
+
+        {siteReportAlerts.length > 0 && (
+          <div>
+            <div className="flex items-center justify-between mb-1.5">
+              <div className="text-[9px] text-[#484f58]">Alerts queued for this report</div>
+              <button
+                onClick={clearReportAlerts}
+                className="text-[8px] text-[#484f58] hover:text-[#f85149] transition-colors"
+              >
+                Clear all
+              </button>
+            </div>
+            <div className="flex flex-col gap-1">
+              {siteReportAlerts.map((a, i) => (
+                <div key={i} className="bg-[#1c2128] border border-[#e3b341] rounded px-2 py-1.5">
+                  <div className="text-[8px] text-[#e3b341] font-medium">{a.zone}</div>
+                  <div className="text-[8px] text-[#484f58] mt-0.5">{a.title}</div>
+                </div>
+              ))}
+              <div className="text-[8px] text-[#3fb950] mt-1">
+                These alerts will be included in the generated report.
+              </div>
+            </div>
+          </div>
+        )}
 
         <div>
           <div className="text-[9px] text-[#484f58] mb-1.5">Report type</div>
@@ -254,6 +286,11 @@ Keep each section to 2-3 sentences. Be specific - reference actual zones, percen
               <div className="text-[13px] font-medium text-[#e6edf3] mb-2">Choose a report type and click Generate</div>
               <div className="text-[10px] text-[#8b949e] max-w-sm">
                 Claude will write both a plain English and a technical version at the same time. Switch between them instantly with the toggle - no need to regenerate.
+                {siteReportAlerts.length > 0 && (
+                  <span className="block mt-2 text-[#e3b341]">
+                    {siteReportAlerts.length} alert{siteReportAlerts.length > 1 ? 's' : ''} from the Alerts page will be included in this report.
+                  </span>
+                )}
               </div>
             </div>
           )}

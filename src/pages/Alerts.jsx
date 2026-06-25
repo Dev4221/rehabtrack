@@ -69,12 +69,6 @@ const allAlerts = {
   ],
 }
 
-const severityStyles = {
-  urgent: { border: 'border-[#f85149]', badge: 'bg-[#3d0000] text-[#f85149]', label: 'URGENT' },
-  attention: { border: 'border-[#e3b341]', badge: 'bg-[#2d2000] text-[#e3b341]', label: 'NEEDS ATTENTION' },
-  resolved: { border: 'border-[#2ea043]', badge: 'bg-[#1a3a1a] text-[#3fb950]', label: 'RESOLVED' },
-}
-
 const newAlertTemplates = {
   'roy-hill': {
     id: 99, severity: 'attention', zone: 'Zone B3',
@@ -106,15 +100,20 @@ const newAlertTemplates = {
   },
 }
 
+const severityStyles = {
+  urgent: { border: 'border-[#f85149]', badge: 'bg-[#3d0000] text-[#f85149]', label: 'URGENT' },
+  attention: { border: 'border-[#e3b341]', badge: 'bg-[#2d2000] text-[#e3b341]', label: 'NEEDS ATTENTION' },
+  resolved: { border: 'border-[#2ea043]', badge: 'bg-[#1a3a1a] text-[#3fb950]', label: 'RESOLVED' },
+}
+
 export default function Alerts() {
-  const { selectedSite } = useSite()
+  const { selectedSite, addAlertToReport, reportAlerts } = useSite()
   const navigate = useNavigate()
   const [view, setView] = useState('executive')
   const [filter, setFilter] = useState('all')
   const [resolvedIds, setResolvedIds] = useState([])
   const [unresolvedIds, setUnresolvedIds] = useState([])
   const [hasNewAlert, setHasNewAlert] = useState(false)
-  const [addedToReport, setAddedToReport] = useState([])
   const [detecting, setDetecting] = useState(false)
 
   const baseAlerts = allAlerts[selectedSite.id] || []
@@ -143,10 +142,6 @@ export default function Alerts() {
     setResolvedIds(prev => prev.filter(x => x !== `${selectedSite.id}-${id}`))
   }
 
-  const addToReport = (id) => {
-    setAddedToReport(prev => [...prev, `${selectedSite.id}-${id}`])
-  }
-
   const detectNewAlerts = () => {
     setDetecting(true)
     setTimeout(() => {
@@ -155,7 +150,8 @@ export default function Alerts() {
     }, 2500)
   }
 
-  const isAddedToReport = (id) => addedToReport.includes(`${selectedSite.id}-${id}`)
+  const isAddedToReport = (id) =>
+    reportAlerts.some(a => a.key === `${selectedSite.id}-${id}`)
 
   return (
     <div className="flex flex-col h-full">
@@ -165,6 +161,14 @@ export default function Alerts() {
           Alerts <span className="text-[#e6edf3]">/ {selectedSite.name}</span>
         </div>
         <div className="flex items-center gap-2">
+          {reportAlerts.length > 0 && (
+            <button
+              onClick={() => navigate('/report')}
+              className="bg-[#0d2a4a] border border-[#1f6feb] rounded px-3 py-1 text-[9px] text-[#58a6ff]"
+            >
+              {reportAlerts.length} alert{reportAlerts.length > 1 ? 's' : ''} in report
+            </button>
+          )}
           <button
             onClick={detectNewAlerts}
             disabled={detecting || hasNewAlert}
@@ -222,7 +226,7 @@ export default function Alerts() {
         <div className="flex flex-col gap-3">
           {filtered.map(alert => {
             const style = severityStyles[alert.resolved ? 'resolved' : alert.severity]
-            const reportKey = `${selectedSite.id}-${alert.id}`
+            const added = isAddedToReport(alert.id)
             return (
               <div key={alert.id} className={`bg-[#161b22] border rounded-lg p-4 ${style.border} ${alert.id === 99 ? 'ring-1 ring-[#2ea043]' : ''}`}>
                 <div className="flex items-start justify-between mb-3">
@@ -259,15 +263,15 @@ export default function Alerts() {
                           View on map
                         </button>
                         <button
-                          onClick={() => addToReport(alert.id)}
-                          disabled={isAddedToReport(reportKey)}
+                          onClick={() => addAlertToReport(alert, selectedSite.name)}
+                          disabled={added}
                           className={`border rounded px-3 py-1 text-[9px] transition-colors ${
-                            isAddedToReport(reportKey)
+                            added
                               ? 'bg-[#1a3a1a] border-[#2ea043] text-[#3fb950] cursor-not-allowed'
                               : 'bg-[#1a3a1a] border-[#2ea043] text-[#3fb950] hover:bg-[#1f4d1f]'
                           }`}
                         >
-                          {isAddedToReport(reportKey) ? 'Added to report' : 'Add to report'}
+                          {added ? 'Added to report' : 'Add to report'}
                         </button>
                       </>
                     ) : (
@@ -282,7 +286,7 @@ export default function Alerts() {
                   <div className="text-[9px] text-[#484f58]">Recommended action: {alert.action}</div>
                 </div>
 
-                {isAddedToReport(reportKey) && (
+                {added && (
                   <div className="mt-2 pt-2 border-t border-[#30363d] flex items-center justify-between">
                     <div className="text-[8px] text-[#3fb950]">Added to next report</div>
                     <button
