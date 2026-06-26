@@ -8,69 +8,85 @@ Live demo: https://rehabtrack-ivory.vercel.app
 
 ---
 
-## The problem this solves
+## The problem
 
-Every iron ore mine operating in Western Australia is legally required to restore the land it disturbs. Before a single tonne of ore is extracted, the operator lodges a financial bond with the state government, held by the Department of Energy, Mines, Industry Regulation and Safety (DEMIRS). That bond is only returned once the land meets strict vegetation recovery standards. Until then, the capital sits locked up - unavailable to the business.
+Western Australia's iron ore operators carry a rehabilitation obligation that does not go away at mine closure. It follows the tenement. Under the Mining Act 1978, operators must lodge an Unconditional Performance Bond with the state government before mining begins. That bond is held by the Department of Energy, Mines, Industry Regulation and Safety (DEMIRS) and is only released once the land meets the vegetation recovery thresholds defined in the approved Mine Closure Plan, reviewed and resubmitted to DEMIRS every three years.
+
+The bond is not a fee. It is capital. It earns nothing while it sits with the government, and the operator carries the financing cost for every year the land falls short of its recovery targets.
 
 Across the four Pilbara sites RehabTrack monitors, that locked capital totals $186 million.
 
-The challenge is that rehabilitation is slow, complex, and difficult to monitor. Vegetation recovery unfolds over years. Problems, including soil erosion after rainfall, invasive weed species, or zones that simply fail to establish, can begin quietly and spread for months before they are discovered during a quarterly ground inspection. By the time a site manager confirms the issue on the ground, the rehabilitation programme is already behind, the bond release date has moved, and the cost of remediation has grown.
+The gap is not in effort. Most operators are investing in rehabilitation. The gap is in visibility. Vegetation recovery unfolds across thousands of hectares of remote land, monitored through quarterly ground inspections and annual environmental reports. Problems, including soil erosion from a single rainfall event, invasive weed species spreading from a haul road boundary, or a replanting programme failing to establish, can begin quietly and grow for months before anyone confirms them on the ground.
 
-The industry has historically managed this through manual site visits, spreadsheet reporting, and periodic submissions to regulators. That approach works, but it is reactive by design. It finds problems after they have already caused damage.
+By the time the problem is documented, the recovery trajectory has already shifted. The bond release date moves. The cost of remediation grows. And the next DEMIRS submission reflects a programme that is behind where it should be.
 
 ---
 
-## What RehabTrack demonstrates
+## What the data shows
 
-RehabTrack is a working proof of concept for a different approach: continuous, automated rehabilitation monitoring powered by satellite imagery and artificial intelligence.
+Sentinel-2 satellite imagery from the European Space Agency captures the Pilbara at 10 metre resolution every five days. That data is freely available. It has been available for over a decade. And it contains a precise, repeatable record of vegetation health across every rehabilitation zone on every major iron ore site in the region.
 
-The system processes real Sentinel-2 satellite data (freely available from the European Space Agency at 10 metre resolution, captured every five days) and applies statistical analysis to detect vegetation anomalies across monitored zones. When a zone shows unusual decline compared to its five-year seasonal baseline, the system flags it, classifies the likely cause, estimates the severity, and surfaces the finding in a dashboard accessible to any stakeholder - without anyone needing to visit the site.
+RehabTrack processes that data and applies statistical analysis against a five-year seasonal baseline to detect anomalies before they appear in a quarterly inspection report.
 
-Built and shipped in four days. Live on the internet. Backed by real data.
+Specifically:
+
+- Zone C3 at Roy Hill shows a vegetation health decline from 0.30 to 0.12 over 30 days following the June 2024 rainfall event. A Random Forest classifier identifies the zone as bare or disturbed with 91% confidence. That signal appears in the satellite data two days after the event. A ground inspection would not confirm it for weeks.
+
+- Zone B2 at Roy Hill shows a spectral signature inconsistent with native Pilbara regrowth. The band ratio matches Cenchrus ciliaris (buffel grass) at 78% confidence. Under the Mine Closure Plan, this is a reportable event that must be resolved before bond release verification can proceed.
+
+- Zone E1 at Christmas Creek has maintained a vegetation health score of 0.08 for five consecutive months, well below the 0.15 threshold for early regrowth. At the current recovery velocity of 1.2% per year, this zone will not reach the government's release threshold until 2035. The bond release target for the site is 2030.
+
+- Zone A1 at Cloudbreak has sustained a vegetation health score above 0.35 for four consecutive months. The bond milestone for this zone is confirmed. The $62 million bond lodged for this site is on track for release in Q1 2027.
+
+This is not modelled data. These are readings from real satellite passes over real sites, processed through a real analytical pipeline.
 
 ---
 
 ## Why this matters to a business
 
-**Faster bond release.** Every month of delay on a $48 million bond costs the operator roughly $200,000 in financing. Catching a weed encroachment event six weeks earlier than a quarterly inspection would have, and treating it before it spreads, directly accelerates the path to release.
+**Capital recovery.** A $48 million bond held at 5% annual financing cost represents approximately $2.4 million per year in opportunity cost. Identifying a problem six weeks earlier than a quarterly inspection, and treating it before it spreads, compresses that timeline. The Scenario Planner in RehabTrack calculates the exact financial impact of each intervention option before any commitment is made.
 
-**Reduced compliance risk.** DEMIRS requires mine operators to submit Mine Closure Plans every three years and demonstrate continuous progress toward rehabilitation targets. A system that provides continuous, auditable records of vegetation recovery is a stronger compliance posture than one that relies on periodic snapshots.
+**Compliance posture.** DEMIRS assesses rehabilitation progress against the approved Mine Closure Plan. A system that produces continuous, auditable vegetation records across every zone provides a stronger basis for the triennial submission than one built from periodic site visits. It also reduces the risk of a DEMIRS finding that triggers a bond increase.
 
-**Reporting that serves every audience.** The same satellite data means different things to a Chief Financial Officer, a rehabilitation scientist, and a regulator. RehabTrack generates plain-English summaries for business leaders and technical reports for environmental consultants simultaneously, from the same underlying data, using AI.
+**Reporting for every audience without rework.** A Chief Financial Officer needs to know the bond release date and what is threatening it. A rehabilitation scientist needs the spectral indices and classifier confidence levels. A regulator needs zone-level compliance records referenced against the Mine Closure Plan. RehabTrack generates all three versions from the same underlying data, simultaneously, using AI. No analyst spends a week reformatting the same numbers for three different audiences.
 
-**Decision support before spending money.** The Scenario Planner allows operators to model the financial outcome of different intervention options, including doing nothing, treating weeds, replanting, or running a full programme, against different rainfall conditions. Before committing $400,000 to a replanting programme, a site manager can see the projected bond release date, the estimated months saved, and the net financial benefit. That is a tool for making better decisions, not just reporting on outcomes.
+**Decisions made before money is spent.** Before committing to a $400,000 to $800,000 replanting programme, a site manager can model the projected bond release date, months recovered, financing costs saved, and net benefit against the intervention cost, under normal conditions, drought, or a cyclone event. That analysis takes seconds in RehabTrack. Currently it takes weeks.
 
 ---
 
 ## How RehabTrack is different
 
-Most existing rehabilitation monitoring services provide data. Environmental consultancies such as Stantec and companies such as Satsense and Decipher offer satellite imagery, vegetation indices, and periodic reports. Those services are valuable, but they share a common structure: a specialist interprets the data, prepares a document, and delivers it to the operator on a schedule.
+Environmental consultancies such as Stantec and specialist monitoring platforms such as Satsense and Decipher provide satellite data and vegetation indices as a service. The data is delivered on a schedule. A specialist interprets it. A report is produced. The operator receives findings.
 
-RehabTrack takes a different position. The interpretation happens automatically, continuously, and in plain language. A non-technical stakeholder, whether that is an executive, an investor, or a board member, can open the dashboard today and understand the status of four Pilbara sites, the financial exposure, and the recommended actions, without needing a consultant to explain the output.
+That model has a structural limitation. The insight is only as current as the last report, and it is only as accessible as the person who wrote it. An executive reviewing a board paper does not have the reference frame to interrogate a vegetation index graph. A financial controller approving a rehabilitation budget cannot assess whether a replanting programme is tracking to plan from a PDF appendix.
 
-This is not a replacement for expert environmental assessment. It is a layer above the raw data that makes that data accessible and actionable to the people who control the capital and make the decisions.
+RehabTrack removes the interpretation layer between the data and the decision maker.
 
-That gap, between the data that exists and the decisions it should be informing, is where the opportunity sits.
+The dashboard is designed so that a Chief Executive, a board member, an investor, or a regulator can open it without a briefing and understand the status of four active rehabilitation programmes, the financial exposure behind each one, the alerts requiring action, and the projected outcomes under different scenarios.
+
+The interpretation is done by the system. The AI generates plain-English findings. The Scenario Planner quantifies the financial consequence of each option. The reports write themselves in the format each audience needs.
+
+The gap this addresses is not technical. The satellite data exists. The analytical methods exist. The gap is between the data and the people whose decisions it should be informing. That gap costs the industry money every year it remains open.
 
 ---
 
 ## Features
 
-**Live satellite monitoring.** Vegetation health scores across all zones, updated monthly from January 2019 to June 2026. Statistical anomaly detection against a five-year seasonal baseline. Zone-level breakdowns per site.
+**Live satellite monitoring.** Vegetation health scores across all zones from January 2019 to June 2026. Statistical anomaly detection against a five-year seasonal baseline. Zone-level breakdowns per site with historical event overlays.
 
-**AI anomaly alerts.** Three AI agents operate in sequence. The Watcher scans satellite imagery and flags unusual zone behaviour. The Analyst searches historical records and Western Australian mining regulation context to classify the cause and severity. The Reporter surfaces alerts to the dashboard and drafts a summary for the site manager. A live simulation shows the full pipeline running in real time.
+**AI anomaly alerts.** Three agents operate in sequence. The Watcher scans satellite imagery and flags anomalous zones. The Analyst searches historical records and WA Mining Act context to classify the cause and severity. The Reporter surfaces findings to the dashboard. Live simulation demonstrates the full pipeline.
 
-**Ask a question.** Conversational AI interface powered by Claude (Anthropic's large language model). Ask anything about the selected site in plain English or technical mode. Responses are grounded in satellite data, DEMIRS compliance guidelines, and the WA Mining Act 1978. The system is restricted to mining rehabilitation topics only.
+**Ask a question.** Conversational AI interface powered by Claude (Anthropic). Responses are grounded in satellite data, DEMIRS guidelines, and the WA Mining Act 1978. Restricted to mining rehabilitation topics only.
 
-**Generate report.** Two versions of every report generated simultaneously: an Executive version in plain English with dollar figures and dates, and an Analyst version with vegetation index values, zone references, and regulatory citations. Switch between them instantly. Download as a PDF. Alerts flagged on the Alerts page are automatically incorporated into the report.
+**Generate report.** Executive version and Analyst version generated simultaneously from the same data. Plain English with financial figures for business leaders. Vegetation index values, zone references, and regulatory citations for technical teams. Downloadable as PDF.
 
-**Scenario planner.** Model any combination of intervention decision and external conditions. Claude calculates the projected bond release date, months saved versus the baseline, financing cost recovered, and net benefit after intervention cost, then writes a plain-English recommendation.
+**Scenario planner.** Model intervention decisions against external conditions. Outputs include projected bond release date, months recovered versus baseline, financing costs saved, and net benefit after intervention cost.
 
-**Bond calculator.** Interactive financial model that updates automatically when switching between sites. Shows projected release under current and downside scenarios. Labelling adapts to the selected audience mode.
+**Bond calculator.** Interactive financial model per site. Current and downside scenarios. Updates automatically when switching sites.
 
-**Compliance tracker.** Portfolio view of all four sites and $186 million in total bonds. Recovery rate versus regulatory target, active alerts, and bond release status per site. Portfolio-level compliance report on demand. CSV export.
+**Compliance tracker.** Portfolio view of all four sites and $186 million in bonds. Recovery rate versus regulatory target, active alerts, and bond release status. Portfolio-level compliance report on demand. CSV export.
 
-**Interactive site map.** Zone polygons per site with three view modes: recovery status, satellite imagery, and year-on-year change.
+**Interactive site map.** Zone polygons per site. Three view modes: recovery status, satellite imagery, and year-on-year change.
 
 **Full light and dark mode.**
 
@@ -109,8 +125,6 @@ npm run dev
 ```
 
 Open http://localhost:5173
-
-AI features on Vercel route through a serverless function automatically. No local proxy required.
 
 ---
 
