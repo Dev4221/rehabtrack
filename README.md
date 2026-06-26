@@ -1,6 +1,6 @@
 # RehabTrack
 
-AI dashboard for monitoring mine rehabilitation across Western Australia's iron ore sites.
+**Mine Rehabilitation Intelligence for Western Australia's Iron Ore Industry**
 
 Live demo: https://rehabtrack-ivory.vercel.app
 
@@ -8,87 +8,77 @@ Live demo: https://rehabtrack-ivory.vercel.app
 
 ---
 
-## The problem
+## The problem this solves
 
-Mining companies in Western Australia are legally required to rehabilitate land they disturb during iron ore mining. Before operations begin, they lodge bonds worth tens of millions of dollars with the state government. That money is only returned once the land meets strict vegetation recovery targets, verified by the Department of Mines, Industry Regulation and Safety (DMIRS).
+Every iron ore mine operating in Western Australia is legally required to restore the land it disturbs. Before a single tonne of ore is extracted, the operator lodges a financial bond with the state government, held by the Department of Energy, Mines, Industry Regulation and Safety (DEMIRS). That bond is only returned once the land meets strict vegetation recovery standards. Until then, the capital sits locked up - unavailable to the business.
 
-The current process is manual, slow, and reactive. Site managers rely on quarterly ground inspections to discover problems that satellite data could have flagged weeks earlier. By the time erosion or invasive weed growth is confirmed on the ground, it has already set back the rehabilitation timeline and delayed the bond release.
+Across the four Pilbara sites RehabTrack monitors, that locked capital totals $186 million.
 
-RehabTrack monitors $186 million in rehabilitation bonds across four Pilbara sites automatically, using satellite imagery and AI to catch problems early.
+The challenge is that rehabilitation is slow, complex, and difficult to monitor. Vegetation recovery unfolds over years. Problems, including soil erosion after rainfall, invasive weed species, or zones that simply fail to establish, can begin quietly and spread for months before they are discovered during a quarterly ground inspection. By the time a site manager confirms the issue on the ground, the rehabilitation programme is already behind, the bond release date has moved, and the cost of remediation has grown.
+
+The industry has historically managed this through manual site visits, spreadsheet reporting, and periodic submissions to regulators. That approach works, but it is reactive by design. It finds problems after they have already caused damage.
 
 ---
 
-## What I built
+## What RehabTrack demonstrates
 
-A full-stack AI dashboard that monitors vegetation recovery using real satellite data, detects problems before they become compliance failures, and generates reports for both business leaders and technical teams - all powered by Claude AI (Anthropic's large language model).
+RehabTrack is a working proof of concept for a different approach: continuous, automated rehabilitation monitoring powered by satellite imagery and artificial intelligence.
 
-The system tracks four active iron ore sites: Roy Hill ($48M bond), Cloudbreak ($62M), Brockman 4 ($35M), and Christmas Creek ($41M). Each site has zone-level monitoring, automated alerts, and bond release forecasting.
+The system processes real Sentinel-2 satellite data (freely available from the European Space Agency at 10 metre resolution, captured every five days) and applies statistical analysis to detect vegetation anomalies across monitored zones. When a zone shows unusual decline compared to its five-year seasonal baseline, the system flags it, classifies the likely cause, estimates the severity, and surfaces the finding in a dashboard accessible to any stakeholder - without anyone needing to visit the site.
+
+Built and shipped in four days. Live on the internet. Backed by real data.
+
+---
+
+## Why this matters to a business
+
+**Faster bond release.** Every month of delay on a $48 million bond costs the operator roughly $200,000 in financing. Catching a weed encroachment event six weeks earlier than a quarterly inspection would have, and treating it before it spreads, directly accelerates the path to release.
+
+**Reduced compliance risk.** DEMIRS requires mine operators to submit Mine Closure Plans every three years and demonstrate continuous progress toward rehabilitation targets. A system that provides continuous, auditable records of vegetation recovery is a stronger compliance posture than one that relies on periodic snapshots.
+
+**Reporting that serves every audience.** The same satellite data means different things to a Chief Financial Officer, a rehabilitation scientist, and a regulator. RehabTrack generates plain-English summaries for business leaders and technical reports for environmental consultants simultaneously, from the same underlying data, using AI.
+
+**Decision support before spending money.** The Scenario Planner allows operators to model the financial outcome of different intervention options, including doing nothing, treating weeds, replanting, or running a full programme, against different rainfall conditions. Before committing $400,000 to a replanting programme, a site manager can see the projected bond release date, the estimated months saved, and the net financial benefit. That is a tool for making better decisions, not just reporting on outcomes.
+
+---
+
+## How RehabTrack is different
+
+Most existing rehabilitation monitoring services provide data. Environmental consultancies such as Stantec and companies such as Satsense and Decipher offer satellite imagery, vegetation indices, and periodic reports. Those services are valuable, but they share a common structure: a specialist interprets the data, prepares a document, and delivers it to the operator on a schedule.
+
+RehabTrack takes a different position. The interpretation happens automatically, continuously, and in plain language. A non-technical stakeholder, whether that is an executive, an investor, or a board member, can open the dashboard today and understand the status of four Pilbara sites, the financial exposure, and the recommended actions, without needing a consultant to explain the output.
+
+This is not a replacement for expert environmental assessment. It is a layer above the raw data that makes that data accessible and actionable to the people who control the capital and make the decisions.
+
+That gap, between the data that exists and the decisions it should be informing, is where the opportunity sits.
 
 ---
 
 ## Features
 
-**Vegetation monitoring**
+**Live satellite monitoring.** Vegetation health scores across all zones, updated monthly from January 2019 to June 2026. Statistical anomaly detection against a five-year seasonal baseline. Zone-level breakdowns per site.
 
-Monthly vegetation health scores from January 2019 to June 2026, sourced from Sentinel-2 satellite imagery via Google Earth Engine at 10 metre resolution. Zone-level breakdowns per site. Anomaly detection compares each reading against a 5-year seasonal baseline to flag anything unusual.
+**AI anomaly alerts.** Three AI agents operate in sequence. The Watcher scans satellite imagery and flags unusual zone behaviour. The Analyst searches historical records and Western Australian mining regulation context to classify the cause and severity. The Reporter surfaces alerts to the dashboard and drafts a summary for the site manager. A live simulation shows the full pipeline running in real time.
 
-**AI anomaly alerts**
+**Ask a question.** Conversational AI interface powered by Claude (Anthropic's large language model). Ask anything about the selected site in plain English or technical mode. Responses are grounded in satellite data, DEMIRS compliance guidelines, and the WA Mining Act 1978. The system is restricted to mining rehabilitation topics only.
 
-Three AI agents run together daily. The Watcher scans satellite imagery and flags problem zones. The Analyst searches historical data and Western Australian mining regulation context to explain what happened and how serious it is. The Reporter pushes alerts to the dashboard and composes an email to the site manager. A live simulation shows the full pipeline running in real time.
+**Generate report.** Two versions of every report generated simultaneously: an Executive version in plain English with dollar figures and dates, and an Analyst version with vegetation index values, zone references, and regulatory citations. Switch between them instantly. Download as a PDF. Alerts flagged on the Alerts page are automatically incorporated into the report.
 
-**Ask a question**
+**Scenario planner.** Model any combination of intervention decision and external conditions. Claude calculates the projected bond release date, months saved versus the baseline, financing cost recovered, and net benefit after intervention cost, then writes a plain-English recommendation.
 
-Real AI chat powered by the Claude API. Ask anything about the selected site in plain English or technical mode. Answers are grounded in satellite data, DMIRS compliance guidelines, and the WA Mining Act 1978. A guardrail in the system prompt ensures Claude only answers mining rehabilitation questions - anything off-topic gets a polite redirect.
+**Bond calculator.** Interactive financial model that updates automatically when switching between sites. Shows projected release under current and downside scenarios. Labelling adapts to the selected audience mode.
 
-**Generate report**
+**Compliance tracker.** Portfolio view of all four sites and $186 million in total bonds. Recovery rate versus regulatory target, active alerts, and bond release status per site. Portfolio-level compliance report on demand. CSV export.
 
-Claude writes both an Executive version (plain English, dollars and dates) and an Analyst version (vegetation index values, zone references, regulatory citations) at the same time. Switch between them instantly with no need to regenerate. Download as a PDF. Alerts flagged on the Alerts page are automatically included in the report prompt.
+**Interactive site map.** Zone polygons per site with three view modes: recovery status, satellite imagery, and year-on-year change.
 
-**Scenario planner**
-
-Model different intervention decisions - do nothing, treat weeds, replant, install erosion controls, or run a full programme - against external conditions like normal rainfall, drought, or a cyclone event. Claude analyses each scenario and gives a specific financial recommendation: months saved, financing costs recovered, and net benefit against intervention cost.
-
-**Bond calculator**
-
-Interactive calculator that updates automatically when you switch sites. Shows the projected bond release date under the current recovery trajectory and under a slower scenario. Executive and Analyst modes use different labels for the same underlying model.
-
-**Compliance tracker**
-
-Portfolio view of all four sites. $186M in total bonds. Shows each site's recovery rate against the regulatory target, open alerts, and bond release status. Generates a portfolio-level compliance report via Claude. Exports to CSV.
-
-**Site map**
-
-Interactive map with per-site zone polygons. Three view modes: recovery status, satellite imagery, and change over time. Zone popups show vegetation scores and year-on-year change.
-
-**Light and dark mode**
-
-Full theme toggle across all pages.
-
----
-
-## Technical decisions worth noting
-
-**Why a serverless function for the API?**
-
-The Claude API key cannot be exposed in the browser. All AI requests route through a Vercel serverless function that reads the key securely from environment variables. This is how API credentials are handled in production systems.
-
-**Why a guardrail on the Ask AI page?**
-
-Without it, Claude answers anything - which breaks the product experience and makes the demo look like a generic chatbot. The system prompt restricts Claude to mine rehabilitation topics only, with a specific redirect message for anything off-topic.
-
-**Why both Executive and Analyst modes?**
-
-The same data means different things to different audiences. A business leader needs "Zone B2 may delay the bond release by 6 months." A technical analyst needs "Band 4/Band 8 spectral ratio: 0.68 vs 0.51 baseline. Z-score: -1.9. Classifier confidence: 64%." Both versions are generated via parallel API calls and cached - no regeneration needed when switching.
-
-**Why CSS variables for theming?**
-
-All colours in the codebase use specific hex values that Tailwind's built-in dark mode system cannot override. CSS variables on the root element let a single class toggle switch the entire colour palette cleanly, without modifying any component files.
+**Full light and dark mode.**
 
 ---
 
 ## Stack
 
-React 19, Vite, Tailwind CSS, React Router, Recharts, Leaflet, React-Leaflet, Papa Parse, React Markdown, Claude API (claude-haiku-4-5), Vercel serverless functions, Google Earth Engine (satellite data export), Python and Pandas (data pipeline)
+React 19, Vite, Tailwind CSS, React Router, Recharts, Leaflet, Claude API (Anthropic), Vercel serverless functions, Google Earth Engine, Python, Pandas
 
 ---
 
@@ -100,7 +90,7 @@ cd rehabtrack
 npm install
 ```
 
-Create `.env` in the root:
+Create `.env` in the root directory:
 
 ```
 VITE_ANTHROPIC_API_KEY=your_key_here
@@ -112,7 +102,7 @@ Start the local API proxy (required for AI features when running locally):
 node server.js
 ```
 
-Start the app:
+Start the application:
 
 ```bash
 npm run dev
@@ -120,7 +110,7 @@ npm run dev
 
 Open http://localhost:5173
 
-On Vercel, AI features route through the serverless function automatically. No proxy needed.
+AI features on Vercel route through a serverless function automatically. No local proxy required.
 
 ---
 
@@ -128,6 +118,6 @@ On Vercel, AI features route through the serverless function automatically. No p
 
 Devansh Bhuta - Data Analyst and AI Engineer, Perth WA
 
-Master of Business Analytics, University of Western Australia. Internship experience across sports analytics (Perth Wildcats, featured on 10News Perth), SaaS reporting automation (DashboardWorX), AI content tools (WryteAI), and clean energy (Hydrizon).
+Master of Business Analytics, University of Western Australia. Previous work includes a player recruitment analytics framework for the Perth Wildcats (National Basketball League) that reduced evaluation time by 80% and was featured on 10News Perth, 20 hours of monthly reporting automated for a SaaS business (DashboardWorX), and a 70% improvement in data accuracy at an AI content platform (WryteAI).
 
 [LinkedIn](https://linkedin.com/in/devanshbhuta) - [GitHub](https://github.com/Dev4221)
