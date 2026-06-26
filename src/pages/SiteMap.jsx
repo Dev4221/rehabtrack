@@ -50,33 +50,10 @@ const allSiteData = {
   },
 }
 
-const statusColors = {
-  recovering: '#2ea043',
-  early: '#d29922',
-  attention: '#f0883e',
-  critical: '#f85149',
-  infrastructure: '#484f58',
-}
-
-const changeColors = {
-  improving: '#2ea043',
-  stable: '#484f58',
-  declining: '#f85149',
-}
-
-const statusLabels = {
-  recovering: 'Recovering well',
-  early: 'Early stage',
-  attention: 'Needs attention',
-  critical: 'Urgent, vegetation loss',
-  infrastructure: 'Infrastructure',
-}
-
-const changeLabels = {
-  improving: 'Improving vs last year',
-  stable: 'Stable, little change',
-  declining: 'Declining, needs action',
-}
+const statusColors = { recovering: '#2ea043', early: '#d29922', attention: '#f0883e', critical: '#f85149', infrastructure: '#484f58' }
+const changeColors = { improving: '#2ea043', stable: '#484f58', declining: '#f85149' }
+const statusLabels = { recovering: 'Recovering well', early: 'Early stage', attention: 'Needs attention', critical: 'Urgent, vegetation loss', infrastructure: 'Infrastructure' }
+const changeLabels = { improving: 'Improving vs last year', stable: 'Stable, little change', declining: 'Declining, needs action' }
 
 function DynamicLayers({ siteFeatures, layer }) {
   const map = useMap()
@@ -85,61 +62,41 @@ function DynamicLayers({ siteFeatures, layer }) {
   useEffect(() => {
     if (!window.L) return
     if (layerRef.current) map.removeLayer(layerRef.current)
-
     const getColor = (f) => layer === 'change' ? changeColors[f.change] : statusColors[f.status]
-
-    const geoJsonData = {
-      type: 'FeatureCollection',
-      features: siteFeatures.map(f => ({
-        type: 'Feature',
-        properties: f,
-        geometry: { type: 'Polygon', coordinates: f.coords }
-      }))
-    }
-
+    const geoJsonData = { type: 'FeatureCollection', features: siteFeatures.map(f => ({ type: 'Feature', properties: f, geometry: { type: 'Polygon', coordinates: f.coords } })) }
     layerRef.current = window.L.geoJSON(geoJsonData, {
-      style: (feature) => ({
-        fillColor: getColor(feature.properties),
-        fillOpacity: 0.7,
-        color: getColor(feature.properties),
-        weight: 2,
-        opacity: 1,
-      }),
+      style: (feature) => ({ fillColor: getColor(feature.properties), fillOpacity: 0.7, color: getColor(feature.properties), weight: 2, opacity: 1 }),
       onEachFeature: (feature, leafletLayer) => {
         const p = feature.properties
         const changeVal = p.recovered - p.prevRecovered
         leafletLayer.bindPopup(`
           <div style="font-family:sans-serif;min-width:180px;padding:4px">
-            <div style="font-size:12px;font-weight:600;color:#e6edf3;margin-bottom:4px">${p.zone}</div>
-            <div style="font-size:10px;color:#8b949e;margin-bottom:8px">${p.desc}</div>
+            <div style="font-size:12px;font-weight:600;color:#1f2328;margin-bottom:4px">${p.zone}</div>
+            <div style="font-size:10px;color:#656d76;margin-bottom:8px">${p.desc}</div>
             <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
-              <span style="color:#484f58">Land recovered</span>
-              <span style="color:#e6edf3;font-weight:500">${p.recovered > 0 ? p.recovered + '%' : '-'}</span>
+              <span style="color:#9198a1">Land recovered</span>
+              <span style="color:#1f2328;font-weight:500">${p.recovered > 0 ? p.recovered + '%' : '-'}</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:10px;margin-bottom:3px">
-              <span style="color:#484f58">Change vs last year</span>
-              <span style="color:${changeVal >= 0 ? '#3fb950' : '#f85149'};font-weight:500">${p.recovered > 0 ? (changeVal > 0 ? '+' + changeVal + '%' : changeVal + '%') : '-'}</span>
+              <span style="color:#9198a1">Change vs last year</span>
+              <span style="color:${changeVal >= 0 ? '#1a7f37' : '#cf222e'};font-weight:500">${p.recovered > 0 ? (changeVal > 0 ? '+' + changeVal + '%' : changeVal + '%') : '-'}</span>
             </div>
             <div style="display:flex;justify-content:space-between;font-size:10px">
-              <span style="color:#484f58">Area</span>
-              <span style="color:#e6edf3;font-weight:500">${p.area} hectares</span>
+              <span style="color:#9198a1">Area</span>
+              <span style="color:#1f2328;font-weight:500">${p.area} hectares</span>
             </div>
           </div>
         `, { className: 'rehabtrack-popup' })
       }
     }).addTo(map)
-
     return () => { if (layerRef.current) map.removeLayer(layerRef.current) }
   }, [siteFeatures, layer, map])
-
   return null
 }
 
 function MapController({ center, zoom }) {
   const map = useMap()
-  useEffect(() => {
-    map.setView(center, zoom)
-  }, [center, zoom, map])
+  useEffect(() => { map.setView(center, zoom) }, [center, zoom, map])
   return null
 }
 
@@ -147,41 +104,25 @@ export default function SiteMap() {
   const { selectedSite } = useSite()
   const [view, setView] = useState('executive')
   const [layer, setLayer] = useState('status')
-
   const isAnalyst = view === 'analyst'
   const siteFeatures = (allSiteData[selectedSite.id] || allSiteData['roy-hill']).features
-
   const legend = layer === 'change'
     ? Object.entries(changeColors).map(([key, color]) => ({ color, label: changeLabels[key] }))
     : Object.entries(statusColors).map(([key, color]) => ({ color, label: statusLabels[key] }))
 
   return (
     <div className="flex flex-col h-full">
-      <div className="h-10 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between px-4 flex-shrink-0">
-        <div className="text-[10px] text-[#8b949e]">
-          Site map <span className="text-[#e6edf3]">/ {selectedSite.name}, {selectedSite.region}</span>
+      <div className="h-10 bg-[var(--bg-secondary)] border-b border-[var(--border)] flex items-center justify-between px-4 flex-shrink-0">
+        <div className="text-[10px] text-[var(--text-secondary)]">
+          Site map <span className="text-[var(--text-primary)]">/ {selectedSite.name}, {selectedSite.region}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="bg-[#21262d] border border-[#30363d] rounded-full p-0.5 flex gap-0.5">
-            <button
-              onClick={() => setView('executive')}
-              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${!isAnalyst ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
-            >
-              Executive
-            </button>
-            <button
-              onClick={() => setView('analyst')}
-              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${isAnalyst ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
-            >
-              Analyst
-            </button>
+          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-full p-0.5 flex gap-0.5">
+            <button onClick={() => setView('executive')} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${!isAnalyst ? 'bg-[var(--green-bg)] text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>Executive</button>
+            <button onClick={() => setView('analyst')} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${isAnalyst ? 'bg-[var(--green-bg)] text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>Analyst</button>
           </div>
           {['status', 'satellite', 'change'].map(l => (
-            <button
-              key={l}
-              onClick={() => setLayer(l)}
-              className={`px-3 py-1 rounded text-[9px] border transition-colors ${layer === l ? 'bg-[#1a3a1a] border-[#2ea043] text-[#3fb950]' : 'bg-[#1c2128] border-[#30363d] text-[#8b949e]'}`}
-            >
+            <button key={l} onClick={() => setLayer(l)} className={`px-3 py-1 rounded text-[9px] border transition-colors ${layer === l ? 'bg-[var(--green-bg)] border-[var(--green-border)] text-[var(--green)]' : 'bg-[var(--bg-tertiary)] border-[var(--border)] text-[var(--text-secondary)]'}`}>
               {l === 'status' ? 'Recovery status' : l === 'satellite' ? 'Satellite view' : 'Change over time'}
             </button>
           ))}
@@ -191,21 +132,15 @@ export default function SiteMap() {
       <div className="flex-1 flex min-h-0">
         <div className="flex-1 relative">
           <style>{`
-            .rehabtrack-popup .leaflet-popup-content-wrapper { background: #161b22; border: 1px solid #30363d; border-radius: 8px; color: #e6edf3; }
-            .rehabtrack-popup .leaflet-popup-tip { background: #161b22; }
-            .leaflet-container { background: #080e1a; }
+            .rehabtrack-popup .leaflet-popup-content-wrapper { background: #ffffff; border: 1px solid #d0d7de; border-radius: 8px; color: #1f2328; }
+            .rehabtrack-popup .leaflet-popup-tip { background: #ffffff; }
+            .leaflet-container { background: #f6f8fa; }
           `}</style>
-          <MapContainer
-            center={[-22.6, 119.3]}
-            zoom={10}
-            style={{ height: '100%', width: '100%' }}
-            zoomControl={true}
-          >
+          <MapContainer center={[-22.6, 119.3]} zoom={10} style={{ height: '100%', width: '100%' }} zoomControl={true}>
             <TileLayer
               url={layer === 'satellite'
                 ? 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'
-                : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'
-              }
+                : 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png'}
               attribution='&copy; OpenStreetMap &copy; Carto'
             />
             <MapController center={selectedSite.center} zoom={selectedSite.zoom} />
@@ -213,23 +148,23 @@ export default function SiteMap() {
           </MapContainer>
         </div>
 
-        <div className="w-52 bg-[#161b22] border-l border-[#30363d] flex flex-col p-3 gap-4 flex-shrink-0">
+        <div className="w-52 bg-[var(--bg-secondary)] border-l border-[var(--border)] flex flex-col p-3 gap-4 flex-shrink-0">
           <div>
-            <div className="text-[10px] font-medium text-[#e6edf3] mb-2">
+            <div className="text-[10px] font-medium text-[var(--text-primary)] mb-2">
               {layer === 'change' ? 'Change vs last year' : isAnalyst ? 'Classification legend' : 'What each colour means'}
             </div>
             <div className="flex flex-col gap-2">
               {legend.map(({ color, label }, i) => (
                 <div key={i} className="flex items-center gap-2">
                   <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ background: color }}></div>
-                  <div className="text-[9px] text-[#e6edf3]">{label}</div>
+                  <div className="text-[9px] text-[var(--text-primary)]">{label}</div>
                 </div>
               ))}
             </div>
           </div>
 
           <div>
-            <div className="text-[10px] font-medium text-[#e6edf3] mb-2">All zones</div>
+            <div className="text-[10px] font-medium text-[var(--text-primary)] mb-2">All zones</div>
             <div className="flex flex-col gap-1.5">
               {siteFeatures.map((f, i) => {
                 const changeVal = f.recovered - f.prevRecovered
@@ -237,9 +172,9 @@ export default function SiteMap() {
                   <div key={i} className="flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
                       <div className="w-2 h-2 rounded-sm flex-shrink-0" style={{ background: layer === 'change' ? changeColors[f.change] : statusColors[f.status] }}></div>
-                      <span className="text-[9px] text-[#8b949e]">{f.zone}</span>
+                      <span className="text-[9px] text-[var(--text-secondary)]">{f.zone}</span>
                     </div>
-                    <span className="text-[9px] font-medium" style={{ color: layer === 'change' ? (changeVal >= 0 ? '#3fb950' : '#f85149') : '#e6edf3' }}>
+                    <span className="text-[9px] font-medium" style={{ color: layer === 'change' ? (changeVal >= 0 ? '#2ea043' : '#f85149') : 'var(--text-primary)' }}>
                       {f.recovered > 0 ? (layer === 'change' ? (changeVal > 0 ? `+${changeVal}%` : `${changeVal}%`) : `${f.recovered}%`) : '-'}
                     </span>
                   </div>
@@ -248,7 +183,7 @@ export default function SiteMap() {
             </div>
           </div>
 
-          <div className="mt-auto text-[8px] text-[#484f58] leading-relaxed">
+          <div className="mt-auto text-[8px] text-[var(--text-muted)] leading-relaxed">
             Click any zone to see details. Sentinel-2 | Jun 18 2026
           </div>
         </div>

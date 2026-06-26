@@ -1,8 +1,10 @@
 import { NavLink } from 'react-router-dom'
 import { useSite } from '../SiteContext'
+import { useTheme } from '../ThemeContext'
 
 export default function Sidebar() {
   const { selectedSite, setSelectedSite, sites } = useSite()
+  const { theme, setTheme } = useTheme()
 
   const navItems = [
     { section: 'Monitoring' },
@@ -21,16 +23,16 @@ export default function Sidebar() {
   ]
 
   return (
-    <div className="w-48 bg-[#161b22] border-r border-[#30363d] flex flex-col flex-shrink-0">
+    <div className="w-48 bg-[var(--bg-secondary)] border-r border-[var(--border)] flex flex-col flex-shrink-0">
 
-      <div className="px-3 py-3 border-b border-[#30363d]">
+      <div className="px-3 py-3 border-b border-[var(--border)]">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-[#1a3a1a] flex items-center justify-center text-[#3fb950] text-xs">
+          <div className="w-6 h-6 rounded-md bg-[var(--green-bg)] flex items-center justify-center text-[var(--green)] text-xs">
             ⊛
           </div>
           <div>
-            <div className="text-sm font-medium text-[#e6edf3]">RehabTrack</div>
-            <div className="text-[9px] text-[#484f58]">WA Mine Intelligence</div>
+            <div className="text-sm font-medium text-[var(--text-primary)]">RehabTrack</div>
+            <div className="text-[9px] text-[var(--text-muted)]">WA Mine Intelligence</div>
           </div>
         </div>
       </div>
@@ -39,7 +41,7 @@ export default function Sidebar() {
         {navItems.map((item, i) => {
           if (item.section) {
             return (
-              <div key={i} className="px-3 pt-3 pb-1 text-[9px] text-[#484f58] uppercase tracking-wider">
+              <div key={i} className="px-3 pt-3 pb-1 text-[9px] text-[var(--text-muted)] uppercase tracking-wider">
                 {item.section}
               </div>
             )
@@ -52,8 +54,8 @@ export default function Sidebar() {
               className={({ isActive }) =>
                 `flex items-center gap-2 px-3 py-1.5 text-[11px] transition-colors ${
                   isActive
-                    ? 'bg-[#1a3a1a] text-[#3fb950] border-l-2 border-[#2ea043]'
-                    : 'text-[#8b949e] hover:text-[#e6edf3]'
+                    ? 'bg-[var(--green-bg)] text-[var(--green)] border-l-2 border-[var(--green-border)]'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
                 }`
               }
             >
@@ -62,8 +64,8 @@ export default function Sidebar() {
               {item.badge && (
                 <span className={`text-[8px] px-1.5 py-0.5 rounded-full ${
                   item.badgeRed
-                    ? 'bg-[#3d0000] text-[#f85149]'
-                    : 'bg-[#1a3a1a] text-[#3fb950]'
+                    ? 'bg-[var(--red-bg)] text-[var(--red)]'
+                    : 'bg-[var(--green-bg)] text-[var(--green)]'
                 }`}>
                   {item.badge}
                 </span>
@@ -73,23 +75,29 @@ export default function Sidebar() {
         })}
       </nav>
 
-      <div className="p-3 border-t border-[#30363d]">
-        <div className="text-[8px] text-[#484f58] mb-1.5 uppercase tracking-wider">Currently viewing</div>
-        <div className="flex flex-col gap-1">
+      <div className="p-3 border-t border-[var(--border)]">
+        <div className="text-[8px] text-[var(--text-muted)] mb-1.5 uppercase tracking-wider">Currently viewing</div>
+        <div className="flex flex-col gap-1 mb-3">
           {sites.map(site => (
             <button
               key={site.id}
               onClick={() => setSelectedSite(site)}
               className={`text-left px-2 py-1.5 rounded text-[9px] transition-colors ${
                 selectedSite.id === site.id
-                  ? 'bg-[#1a3a1a] text-[#3fb950] border border-[#2ea043]'
-                  : 'text-[#8b949e] hover:text-[#e6edf3] hover:bg-[#1c2128]'
+                  ? 'bg-[var(--green-bg)] text-[var(--green)] border border-[var(--green-border)]'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-tertiary)]'
               }`}
             >
               {site.name}
             </button>
           ))}
         </div>
+        <button
+          onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          className="w-full flex items-center justify-center gap-2 px-2 py-1.5 rounded text-[9px] bg-[var(--bg-elevated)] border border-[var(--border)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+        >
+          {theme === 'dark' ? '☀ Light mode' : '☾ Dark mode'}
+        </button>
       </div>
 
     </div>

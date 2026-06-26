@@ -1,1 +1,53 @@
 @import "tailwindcss";
+
+:root {
+  --bg-primary: #0d1117;
+  --bg-secondary: #161b22;
+  --bg-tertiary: #1c2128;
+  --bg-elevated: #21262d;
+  --border: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #8b949e;
+  --text-muted: #484f58;
+  --green: #3fb950;
+  --green-bg: #1a3a1a;
+  --green-border: #2ea043;
+  --green-dark: #1a2d1a;
+  --amber: #e3b341;
+  --amber-bg: #2d2000;
+  --amber-border: #d29922;
+  --red: #f85149;
+  --red-bg: #3d0000;
+  --red-border: #cf222e;
+  --blue: #58a6ff;
+  --blue-bg: #0d2a4a;
+  --blue-border: #1f6feb;
+}
+
+.light {
+  --bg-primary: #f6f8fa;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #f6f8fa;
+  --bg-elevated: #eaeef2;
+  --border: #d0d7de;
+  --text-primary: #1f2328;
+  --text-secondary: #656d76;
+  --text-muted: #9198a1;
+  --green: #1a7f37;
+  --green-bg: #dafbe1;
+  --green-border: #2da44e;
+  --green-dark: #d1f7d6;
+  --amber: #9a6700;
+  --amber-bg: #fff8c5;
+  --amber-border: #bf8700;
+  --red: #cf222e;
+  --red-bg: #ffebe9;
+  --red-border: #cf222e;
+  --blue: #0969da;
+  --blue-bg: #ddf4ff;
+  --blue-border: #0969da;
+}
+
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}

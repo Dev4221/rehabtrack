@@ -164,31 +164,31 @@ export default function AskQuestion() {
   return (
     <div className="flex h-full">
       <div className="flex-1 flex flex-col">
-        <div className="h-10 bg-[#161b22] border-b border-[#30363d] flex items-center justify-between px-4 flex-shrink-0">
+        <div className="h-10 bg-[var(--bg-secondary)] border-b border-[var(--border)] flex items-center justify-between px-4 flex-shrink-0">
           <div className="flex items-center gap-2">
-            <div className="text-[10px] text-[#8b949e]">
+            <div className="text-[10px] text-[var(--text-secondary)]">
               Ask a question
             </div>
-            <span className="text-[8px] px-1.5 py-0.5 rounded bg-[#1a3a1a] text-[#3fb950]">Claude AI</span>
+            <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--green-bg)] text-[var(--green)]">Claude AI</span>
             {messages.length > 0 && (
               <button
                 onClick={clearConversation}
-                className="text-[8px] text-[#484f58] hover:text-[#f85149] transition-colors ml-1"
+                className="text-[8px] text-[var(--text-muted)] hover:text-[var(--red)] transition-colors ml-1"
               >
                 Clear conversation
               </button>
             )}
           </div>
-          <div className="bg-[#21262d] border border-[#30363d] rounded-full p-0.5 flex gap-0.5">
+          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-full p-0.5 flex gap-0.5">
             <button
               onClick={() => setView('executive')}
-              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${!isAnalyst ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
+              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${!isAnalyst ? 'bg-[var(--green-bg)] text-[var(--green)]' : 'text-[var(--text-muted)]'}`}
             >
               Executive
             </button>
             <button
               onClick={() => setView('analyst')}
-              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${isAnalyst ? 'bg-[#1a3a1a] text-[#3fb950]' : 'text-[#484f58]'}`}
+              className={`px-3 py-1 rounded-full text-[9px] transition-colors ${isAnalyst ? 'bg-[var(--green-bg)] text-[var(--green)]' : 'text-[var(--text-muted)]'}`}
             >
               Analyst
             </button>
@@ -199,8 +199,8 @@ export default function AskQuestion() {
           {messages.length === 0 && (
             <div className="flex-1 flex flex-col items-center justify-center text-center">
               <div className="text-[32px] mb-3">◎</div>
-              <div className="text-[13px] font-medium text-[#e6edf3] mb-2">Ask anything about {selectedSite.name}</div>
-              <div className="text-[10px] text-[#8b949e] max-w-sm">
+              <div className="text-[13px] font-medium text-[var(--text-primary)] mb-2">Ask anything about {selectedSite.name}</div>
+              <div className="text-[10px] text-[var(--text-secondary)] max-w-sm">
                 {isAnalyst
                   ? 'Analyst mode returns structured technical responses with NDVI values, Z-scores, and zone-level data.'
                   : 'Executive mode returns plain-English answers grounded in real satellite data and WA mining regulations.'
@@ -213,12 +213,12 @@ export default function AskQuestion() {
             <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
               <div className={`max-w-[80%] rounded-lg px-3 py-2 text-[10px] leading-relaxed ${
                 msg.role === 'user'
-                  ? 'bg-[#21262d] text-[#8b949e]'
-                  : 'bg-[#1a2d1a] border border-[#2a4a2a] text-[#b8e6b8]'
+                  ? 'bg-[var(--bg-elevated)] text-[var(--text-secondary)]'
+                  : 'bg-[var(--green-dark)] border border-[var(--green-border)] text-[var(--green)]'
               }`}>
                 {msg.content}
                 {msg.role === 'assistant' && (
-                  <div className="text-[8px] text-[#484f58] mt-1">
+                  <div className="text-[8px] text-[var(--text-muted)] mt-1">
                     Sources: satellite data 2019-2026 | WA Mining Act | DMIRS guidelines
                   </div>
                 )}
@@ -228,26 +228,26 @@ export default function AskQuestion() {
 
           {loading && (
             <div className="flex justify-start">
-              <div className="bg-[#1a2d1a] border border-[#2a4a2a] rounded-lg px-3 py-2 text-[10px] text-[#3fb950]">
+              <div className="bg-[var(--green-dark)] border border-[var(--green-border)] rounded-lg px-3 py-2 text-[10px] text-[var(--green)]">
                 Working on your answer...
               </div>
             </div>
           )}
         </div>
 
-        <div className="p-4 border-t border-[#30363d] flex-shrink-0">
+        <div className="p-4 border-t border-[var(--border)] flex-shrink-0">
           <div className="flex gap-2">
             <input
               value={input}
               onChange={e => setInput(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && sendMessage()}
-              className="flex-1 bg-[#161b22] border border-[#30363d] rounded-lg px-3 py-2 text-[10px] text-[#e6edf3] placeholder-[#484f58] focus:outline-none focus:border-[#2ea043]"
+              className="flex-1 bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg px-3 py-2 text-[10px] text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-[var(--green-border)]"
               placeholder={`Ask anything about ${selectedSite.name}...`}
             />
             <button
               onClick={() => sendMessage()}
               disabled={loading}
-              className="bg-[#1a3a1a] border border-[#2ea043] rounded-lg px-4 py-2 text-[10px] text-[#3fb950] disabled:opacity-50"
+              className="bg-[var(--green-bg)] border border-[var(--green-border)] rounded-lg px-4 py-2 text-[10px] text-[var(--green)] disabled:opacity-50"
             >
               Ask
             </button>
@@ -255,21 +255,21 @@ export default function AskQuestion() {
         </div>
       </div>
 
-      <div className="w-56 bg-[#161b22] border-l border-[#30363d] flex flex-col p-3 gap-4 flex-shrink-0">
+      <div className="w-56 bg-[var(--bg-secondary)] border-l border-[var(--border)] flex flex-col p-3 gap-4 flex-shrink-0">
         <div>
-          <div className="text-[10px] font-medium text-[#e6edf3] mb-1">What the AI can reference</div>
+          <div className="text-[10px] font-medium text-[var(--text-primary)] mb-1">What the AI can reference</div>
           <div className="flex flex-col gap-1.5">
             {knowledgeBase.map((item, i) => (
-              <div key={i} className="bg-[#1c2128] border border-[#30363d] rounded p-2">
-                <div className="text-[9px] text-[#e6edf3]">{item.name}</div>
-                <div className="text-[8px] text-[#484f58]">{item.detail}</div>
+              <div key={i} className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded p-2">
+                <div className="text-[9px] text-[var(--text-primary)]">{item.name}</div>
+                <div className="text-[8px] text-[var(--text-muted)]">{item.detail}</div>
               </div>
             ))}
           </div>
         </div>
 
         <div>
-          <div className="text-[10px] font-medium text-[#e6edf3] mb-1">
+          <div className="text-[10px] font-medium text-[var(--text-primary)] mb-1">
             {isAnalyst ? 'Technical queries' : 'Questions people ask'}
           </div>
           <div className="flex flex-col gap-1.5">
@@ -277,7 +277,7 @@ export default function AskQuestion() {
               <button
                 key={i}
                 onClick={() => sendMessage(q)}
-                className="bg-[#1c2128] border border-[#30363d] rounded p-2 text-[9px] text-[#8b949e] text-left hover:text-[#e6edf3] hover:border-[#3d444d] transition-colors"
+                className="bg-[var(--bg-tertiary)] border border-[var(--border)] rounded p-2 text-[9px] text-[var(--text-secondary)] text-left hover:text-[var(--text-primary)] hover:border-[var(--text-muted)] transition-colors"
               >
                 {q}
               </button>
@@ -285,7 +285,7 @@ export default function AskQuestion() {
           </div>
         </div>
 
-        <div className="text-[8px] text-[#484f58] leading-relaxed mt-auto">
+        <div className="text-[8px] text-[var(--text-muted)] leading-relaxed mt-auto">
           {isAnalyst
             ? 'Analyst mode returns NDVI values, Z-scores, and technical zone data. Not a substitute for formal environmental assessment.'
             : 'This AI only answers questions about mine rehabilitation and WA mining regulations. Not a substitute for professional environmental advice.'
