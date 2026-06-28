@@ -51,14 +51,59 @@ export default function ScenarioPlanner() {
     return { year: year.toFixed(1), withIntervention: Math.min(100, currentPct + adjustedGrowth * i * 0.5), withoutIntervention: Math.min(100, currentPct + baseGrowth * i * 0.5) }
   })
 
+  const buildPrompt = () => {
+    const costStr = selectedIntervention.costMin === 0 ? 'no upfront cost' : `an upfront cost of $${selectedIntervention.costMin.toLocaleString()} to $${selectedIntervention.costMax.toLocaleString()}`
+    const isDoNothing = selectedIntervention.id === 'none'
+    const isCyclone = selectedFactor.id === 'cyclone'
+    const siteIsStruggling = selectedSite.growthRate < 4
+
+    let toneGuidance = ''
+
+    if (isDoNothing) {
+      toneGuidance = `This is a risk brief, not a neutral analysis. The operator has chosen to do nothing. Write this as a frank assessment of the financial and regulatory consequences of inaction. State clearly what will happen to the bond, the timeline, and the site's compliance position if nothing changes. Do not soften this. The cost of inaction should be the central message. End with a single direct sentence stating what you recommend instead and why acting now rather than later matters financially.`
+    } else if (isCyclone) {
+      toneGuidance = `A cyclone event introduces conditions that are genuinely difficult to model with precision. Acknowledge this honestly. Do not present projections as confident. Explain what the numbers suggest under this scenario, but note that cyclone impacts on rehabilitation programmes are highly variable and dependent on timing, track, and site-specific drainage conditions. Recommend contingency planning and a post-event ground assessment protocol as the most important actions, regardless of the intervention chosen. End with a single direct sentence on what the operator should do now to reduce exposure to this risk.`
+    } else if (siteIsStruggling) {
+      toneGuidance = `This site is already significantly behind its rehabilitation targets. The analysis should reflect that urgency. Do not frame interventions optimistically. Be direct about whether the proposed intervention is sufficient given where the site currently stands, or whether a more substantial programme is required. If the numbers show the intervention helps but is still not enough to meet the bond release target on time, say so. End with a single direct sentence on what the operator should realistically plan for.`
+    } else {
+      toneGuidance = `Write a balanced, direct analysis. If the intervention makes financial sense, say so clearly. If it does not, say so equally clearly. Do not hedge unnecessarily. End with a single direct sentence recommending a specific course of action and why it is the right call given the site's current position.`
+    }
+
+    return `You are a senior mining rehabilitation advisor providing scenario analysis for ${selectedSite.name} in the Pilbara, Western Australia.
+
+Current site position:
+- Land recovered: ${selectedSite.recovered}% of ${selectedSite.area.toLocaleString()} hectares
+- Annual recovery rate: +${selectedSite.growthRate}% per year (regulatory target is 6% per year)
+- Bond lodged with WA government: $${(selectedSite.bond / 1000000).toFixed(0)} million
+- Current projected bond release: ${selectedSite.release}
+- Site status: ${selectedSite.status}
+
+Scenario under analysis:
+- Decision: ${selectedIntervention.label} - ${selectedIntervention.desc}
+- External conditions: ${selectedFactor.label}
+- Timeframe modelled: ${timeframe} years
+- Upfront cost: ${costStr}
+- Adjusted recovery rate under this scenario: +${adjustedGrowth.toFixed(1)}% per year
+- Projected bond release under this scenario: ${releaseQuarter} ${releaseYearInt}
+${monthsSaved > 0 ? `- Time saved vs current trajectory: ${monthsSaved} months` : monthsSaved < 0 ? `- Additional delay vs current trajectory: ${Math.abs(monthsSaved)} months` : '- No change to current timeline'}
+${netBenefit > 0 ? `- Estimated net financial benefit: $${netBenefit.toLocaleString()} (financing costs recovered minus intervention cost)` : `- Estimated net cost after accounting for financing savings: $${Math.abs(netBenefit).toLocaleString()}`}
+
+${toneGuidance}
+
+Write three short paragraphs:
+1. What happens to the site under this scenario and what that means for the bond release timeline
+2. The financial case - whether the numbers justify this decision, with specific figures
+3. Your recommendation
+
+Be specific. Use the actual site name, dollar figures, and dates. Do not use markdown headers. Do not use long dashes or em dashes. Use hyphens or commas instead. No asterisks or bold text.`
+  }
+
   const runAnalysis = async () => {
     setLoading(true)
     setAnalysis('')
     setHasAnalysis(true)
-    const costStr = selectedIntervention.costMin === 0 ? 'no upfront cost' : `an upfront cost of $${selectedIntervention.costMin.toLocaleString()} to $${selectedIntervention.costMax.toLocaleString()}`
-    const prompt = `You are a senior mining rehabilitation advisor analysing a scenario for ${selectedSite.name} in the Pilbara, WA.\n\nCurrent site status:\n- Land recovered: ${selectedSite.recovered}%\n- Annual recovery rate: +${selectedSite.growthRate}%/yr\n- Bond value: $${(selectedSite.bond/1000000).toFixed(0)}M lodged with WA government\n- Current projected bond release: ${selectedSite.release}\n- Site status: ${selectedSite.status}\n\nScenario being analysed:\n- Intervention: ${selectedIntervention.label}, ${selectedIntervention.desc}\n- External conditions: ${selectedFactor.label}\n- Timeframe: ${timeframe} years\n- Upfront cost: ${costStr}\n- Adjusted recovery rate with intervention: +${adjustedGrowth.toFixed(1)}%/yr\n- Projected bond release with this scenario: ${releaseQuarter} ${releaseYearInt}\n${monthsSaved > 0 ? `- Months saved vs doing nothing: ${monthsSaved} months` : monthsSaved < 0 ? `- Months delayed vs current trajectory: ${Math.abs(monthsSaved)} months` : '- No change to timeline'}\n${netBenefit > 0 ? `- Estimated net financial benefit: $${netBenefit.toLocaleString()} (financing costs saved minus intervention cost)` : `- Estimated net cost: $${Math.abs(netBenefit).toLocaleString()}`}\n\nWrite a 3-paragraph plain-English analysis of this scenario:\n1. What will happen to the site under these conditions\n2. The financial case for or against this intervention\n3. What you recommend and why\n\nBe specific and use the actual numbers, zones, and dollar figures. Be direct and honest. If the scenario is bad, say so. Do not use markdown headers. Do not use long dashes or em dashes. Use regular hyphens or commas instead. No asterisks or bold text.`
     try {
-      const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 1024, messages: [{ role: 'user', content: prompt }] }) })
+      const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 1024, messages: [{ role: 'user', content: buildPrompt() }] }) })
       const data = await response.json()
       setAnalysis(data.content[0].text)
     } catch (err) {
@@ -75,7 +120,6 @@ export default function ScenarioPlanner() {
 
   return (
     <div className="flex flex-col h-full">
-
       <div className="h-10 bg-[var(--bg-secondary)] border-b border-[var(--border)] flex items-center justify-between px-4 flex-shrink-0">
         <div className="text-[10px] text-[var(--text-secondary)]">
           Scenario planner <span className="text-[var(--text-primary)]">/ {selectedSite.name}</span>
@@ -85,11 +129,10 @@ export default function ScenarioPlanner() {
 
       <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
         <div className="text-[10px] text-[var(--text-secondary)]">
-          Model different intervention decisions and external conditions to see how they affect the bond release timeline and financial outcome. Claude analyses each scenario and gives you a plain-English recommendation.
+          Model different intervention decisions and external conditions to see how they affect the bond release timeline and financial outcome. Claude analyses each scenario and gives a direct recommendation.
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-
           <div className="flex flex-col gap-3">
             <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-4">
               <div className="text-[10px] font-medium text-[var(--text-primary)] mb-3">What do you do?</div>
@@ -141,17 +184,17 @@ export default function ScenarioPlanner() {
               </div>
               <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-3">
                 <div className="text-[8px] text-[var(--text-muted)] mb-1">Intervention cost</div>
-                <div className="text-[16px] font-medium text-[var(--text-primary)]">{selectedIntervention.costMin === 0 ? '$0' : `$${(interventionCostMid/1000).toFixed(0)}k`}</div>
+                <div className="text-[16px] font-medium text-[var(--text-primary)]">{selectedIntervention.costMin === 0 ? '$0' : `$${(interventionCostMid / 1000).toFixed(0)}k`}</div>
                 <div className="text-[8px] text-[var(--text-muted)]">estimated midpoint</div>
               </div>
               <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-3">
                 <div className="text-[8px] text-[var(--text-muted)] mb-1">Financing cost saved</div>
-                <div className={`text-[16px] font-medium ${financingCostSaved > 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>{financingCostSaved > 0 ? `$${(financingCostSaved/1000).toFixed(0)}k` : '$0'}</div>
+                <div className={`text-[16px] font-medium ${financingCostSaved > 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>{financingCostSaved > 0 ? `$${(financingCostSaved / 1000).toFixed(0)}k` : '$0'}</div>
                 <div className="text-[8px] text-[var(--text-muted)]">at 5%/yr on bond</div>
               </div>
               <div className={`rounded-lg p-3 border ${netBenefit > 0 ? 'bg-[var(--green-dark)] border-[var(--green-border)]' : 'bg-[var(--bg-tertiary)] border-[var(--border)]'}`}>
                 <div className="text-[8px] text-[var(--text-muted)] mb-1">Net benefit</div>
-                <div className={`text-[16px] font-medium ${netBenefit > 0 ? 'text-[var(--green)]' : 'text-[var(--amber)]'}`}>{netBenefit > 0 ? `+$${(netBenefit/1000).toFixed(0)}k` : netBenefit === 0 ? '$0' : `-$${(Math.abs(netBenefit)/1000).toFixed(0)}k`}</div>
+                <div className={`text-[16px] font-medium ${netBenefit > 0 ? 'text-[var(--green)]' : 'text-[var(--amber)]'}`}>{netBenefit > 0 ? `+$${(netBenefit / 1000).toFixed(0)}k` : netBenefit === 0 ? '$0' : `-$${(Math.abs(netBenefit) / 1000).toFixed(0)}k`}</div>
                 <div className="text-[8px] text-[var(--text-muted)]">saved minus cost</div>
               </div>
             </div>
@@ -186,7 +229,7 @@ export default function ScenarioPlanner() {
             {!hasAnalysis && !loading && (
               <div className="flex-1 flex flex-col items-center justify-center text-center">
                 <div className="text-[28px] mb-3">◎</div>
-                <div className="text-[10px] text-[var(--text-muted)]">Choose an intervention and conditions, then click "Get Claude AI analysis" for a plain-English recommendation.</div>
+                <div className="text-[10px] text-[var(--text-muted)]">Choose an intervention and conditions, then click "Get Claude AI analysis" for a direct recommendation.</div>
               </div>
             )}
             {loading && (

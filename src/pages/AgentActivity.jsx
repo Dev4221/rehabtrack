@@ -53,7 +53,7 @@ const siteLogEntries = {
     { time: '09:14:22', agent: 'Analyst', color: 'text-[var(--red)]', message: 'Zone E3: erosion spreading at 55ha/month | rill formation confirmed | erosion control works urgent' },
     { time: '09:14:25', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Zone F2: spectral match 83% Cenchrus ciliaris | reportable under MCP s.4.2 | ground inspection required' },
     { time: '09:14:27', agent: 'Reporter', color: 'text-[var(--blue)]', message: 'Pushing 3 alerts to dashboard | flagging site as AT RISK' },
-    { time: '09:14:29', agent: 'Reporter', color: 'text-[var(--blue)]', message: 'Urgent alert email sent to site manager, Fortescue rehabilitation team, and DMIRS contact' },
+    { time: '09:14:29', agent: 'Reporter', color: 'text-[var(--blue)]', message: 'Urgent alert email sent to site manager, Fortescue rehabilitation team, and DEMIRS contact' },
     { time: '09:14:31', agent: 'Reporter', color: 'text-[var(--red)]', message: 'ESCALATION: bond release risk flagged to executive team | $41M bond at risk of delay past 2030' },
     { time: '09:14:33', agent: 'Reporter', color: 'text-[var(--green)]', message: 'Run complete | next run: tomorrow 09:14 AWST' },
   ],
@@ -111,11 +111,11 @@ export default function AgentActivity() {
       dotColor: running ? 'bg-[var(--green)] animate-pulse' : 'bg-[var(--green)]',
       badgeClass: 'bg-[var(--green-bg)] text-[var(--green)]',
       status: running ? 'Running...' : 'Active',
-      desc: `Checks the satellite data every day. Looks at vegetation levels across all ${stats.zones} zones at ${selectedSite.name} and flags anything that has changed unusually compared to the same time last year.`,
+      desc: `Pulls the latest satellite imagery every day and checks vegetation levels across all ${stats.zones} zones at ${selectedSite.name}. Flags anything that has changed unusually compared to the same time in previous years.`,
       stats: [
         { label: 'Zones checked today', value: running ? '...' : stats.zones },
         { label: 'Problems flagged', value: running ? '...' : stats.problems, valueColor: problemColor },
-        { label: 'Mean NDVI score', value: running ? '...' : stats.ndvi },
+        { label: 'Mean vegetation score', value: running ? '...' : stats.ndvi },
       ],
       tools: ['Google Earth Engine', 'scikit-learn', 'Python'],
     },
@@ -125,13 +125,13 @@ export default function AgentActivity() {
       dotColor: running ? 'bg-[var(--amber)] animate-pulse' : 'bg-[var(--amber)]',
       badgeClass: 'bg-[var(--amber-bg)] text-[var(--amber)]',
       status: running ? 'Running...' : 'Active',
-      desc: 'Takes the problems flagged by the Watcher and works out what caused them. It searches through 5 years of historical data and WA mining regulations to explain what is happening and how serious it is.',
+      desc: 'Receives the flagged zones from the Watcher and determines what caused the change, how serious it is, and what the regulatory obligation is. Searches five years of historical data and WA mining regulation context before drawing a conclusion.',
       stats: [
         { label: 'Problems analysed', value: running ? '...' : stats.problems },
-        { label: 'Knowledge base searches', value: running ? '...' : stats.searches },
+        { label: 'Historical records searched', value: running ? '...' : stats.searches },
         { label: 'Average confidence', value: running ? '...' : stats.confidence, valueColor: 'text-[var(--amber)]' },
       ],
-      tools: ['Claude AI', 'FAISS knowledge base', 'WA Mining Act'],
+      tools: ['Claude AI', 'Historical data', 'WA Mining Act 1978'],
     },
     {
       name: 'Reporter',
@@ -139,19 +139,18 @@ export default function AgentActivity() {
       dotColor: running ? 'bg-[var(--blue)] animate-pulse' : 'bg-[var(--blue)]',
       badgeClass: 'bg-[var(--blue-bg)] text-[var(--blue)]',
       status: running ? 'Running...' : 'Active',
-      desc: 'Takes the findings and does three things: updates this dashboard with the new alerts, recalculates the bond release forecast, and sends an email to the site manager with a plain-English summary.',
+      desc: 'Takes the Analyst\'s findings and acts on them. Updates this dashboard with the new alerts, recalculates the bond release forecast, and sends a plain-English summary to the site manager within minutes of the satellite pass being processed.',
       stats: [
         { label: 'Dashboard updates', value: running ? '...' : stats.updates },
         { label: 'Emails sent', value: running ? '...' : stats.emails },
         { label: 'Bond forecast', value: running ? '...' : 'Recalculated', valueColor: 'text-[var(--green)]' },
       ],
-      tools: ['Claude AI', 'Email', 'React state'],
+      tools: ['Claude AI', 'Email', 'Dashboard'],
     },
   ]
 
   return (
     <div className="flex flex-col h-full">
-
       <div className="h-10 bg-[var(--bg-secondary)] border-b border-[var(--border)] flex items-center justify-between px-4 flex-shrink-0">
         <div className="text-[10px] text-[var(--text-secondary)]">
           Agent activity <span className="text-[var(--text-primary)]">/ {selectedSite.name}</span>
@@ -175,9 +174,8 @@ export default function AgentActivity() {
       </div>
 
       <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
-
         <div className="text-[10px] text-[var(--text-secondary)]">
-          RehabTrack uses three AI agents that work together automatically every day. No one needs to trigger them. This page shows what they found at {selectedSite.name} during today's run. Click "Run agents now" to watch a live simulation.
+          RehabTrack uses three AI agents that run automatically every day. This page shows what they found at {selectedSite.name} during today's run. Click "Run agents now" to watch a live simulation of the process.
         </div>
 
         <div className="grid grid-cols-3 gap-3">
@@ -219,7 +217,9 @@ export default function AgentActivity() {
 
           {showLog && (
             <div ref={logRef} className="p-4 flex flex-col gap-1.5 font-mono max-h-64 overflow-auto bg-[var(--bg-primary)]">
-              {visibleEntries.length === 0 && isSimulating && <div className="text-[9px] text-[var(--text-muted)]">Initialising agents...</div>}
+              {visibleEntries.length === 0 && isSimulating && (
+                <div className="text-[9px] text-[var(--text-muted)]">Initialising agents...</div>
+              )}
               {visibleEntries.map((entry, i) => (
                 <div key={i} className="flex gap-3 text-[9px]">
                   <span className="text-[var(--text-muted)] flex-shrink-0">{entry.time}</span>
@@ -238,14 +238,14 @@ export default function AgentActivity() {
         </div>
 
         <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-4">
-          <div className="text-[10px] font-medium text-[var(--text-primary)] mb-3">How the agents work together</div>
+          <div className="text-[10px] font-medium text-[var(--text-primary)] mb-3">How the process works</div>
           <div className="flex items-center gap-2">
             {[
-              { name: 'Watcher', cls: 'bg-[var(--green-bg)] text-[var(--green)] border-[var(--green-border)]', desc: 'Scans satellite data | flags problems' },
+              { name: 'Watcher', cls: 'bg-[var(--green-bg)] text-[var(--green)] border-[var(--green-border)]', desc: 'Scans satellite imagery daily | flags unusual changes' },
               { arrow: true },
-              { name: 'Analyst', cls: 'bg-[var(--amber-bg)] text-[var(--amber)] border-[var(--amber-border)]', desc: 'Explains problems | checks regulations' },
+              { name: 'Analyst', cls: 'bg-[var(--amber-bg)] text-[var(--amber)] border-[var(--amber-border)]', desc: 'Determines cause and severity | checks regulatory obligations' },
               { arrow: true },
-              { name: 'Reporter', cls: 'bg-[var(--blue-bg)] text-[var(--blue)] border-[var(--blue-border)]', desc: 'Updates dashboard | emails manager' },
+              { name: 'Reporter', cls: 'bg-[var(--blue-bg)] text-[var(--blue)] border-[var(--blue-border)]', desc: 'Updates dashboard | recalculates bond forecast | emails site manager' },
             ].map((item, i) => (
               item.arrow
                 ? <div key={i} className="text-[var(--text-muted)] text-lg flex-shrink-0">→</div>
@@ -255,8 +255,8 @@ export default function AgentActivity() {
                   </div>
             ))}
           </div>
-          <div className="text-[9px] text-[var(--text-muted)] mt-3">
-            The agents run automatically every day at 09:14 AWST. No one needs to trigger them. When a problem is found, the site manager receives an email within minutes.
+          <div className="text-[9px] text-[var(--text-muted)] mt-3 leading-relaxed">
+            Each day at 09:14 AWST, the process starts automatically. The Watcher pulls the latest satellite imagery and checks every zone against its five-year historical pattern. If something looks unusual, it passes the flagged zone to the Analyst. The Analyst searches historical records and WA mining regulation context to determine what happened, how serious it is, and what the regulatory obligation is. If action is needed, the Reporter updates this dashboard, recalculates the bond release forecast, and sends a plain-English summary to the site manager - all within minutes. If nothing is found, the process runs silently and logs an all-clear. No one triggers any of this manually.
           </div>
         </div>
       </div>
