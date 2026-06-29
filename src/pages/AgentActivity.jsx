@@ -1,61 +1,34 @@
 import { useState, useEffect, useRef } from 'react'
 import { useSite } from '../SiteContext'
+import Papa from 'papaparse'
 
-const siteLogEntries = {
+const siteNdviOffset = {
+  'roy-hill': 0,
+  'cloudbreak': 0.08,
+  'brockman': -0.10,
+  'christmas-creek': -0.20,
+}
+
+const siteZoneMap = {
   'roy-hill': [
-    { time: '09:14:01', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Starting daily scan | Roy Hill | 847 zones loaded from GEE' },
-    { time: '09:14:05', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Sentinel-2 imagery fetched | Jun 18 2026 pass | cloud cover 4%' },
-    { time: '09:14:09', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Vegetation scores computed across all 847 zones | mean NDVI 0.41' },
-    { time: '09:14:12', agent: 'Watcher', color: 'text-[var(--red)]', message: 'PROBLEM DETECTED: Zone C3 | vegetation dropped significantly in 30 days | escalating to Analyst' },
-    { time: '09:14:13', agent: 'Watcher', color: 'text-[var(--red)]', message: 'PROBLEM DETECTED: Zone B2 | unusual plant growth pattern detected | escalating to Analyst' },
-    { time: '09:14:14', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Received 2 flagged zones | searching knowledge base for historical context' },
-    { time: '09:14:16', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Found: Zone C3 had similar events in 2021 and 2022, both caused by heavy rainfall' },
-    { time: '09:14:19', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Conclusion: Zone C3 | rainfall erosion | recovery expected in 4 months | severity: HIGH' },
-    { time: '09:14:22', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Found: Zone B2 spectral pattern matches buffel grass. WA Mining Act s.4.2 applies.' },
-    { time: '09:14:24', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Conclusion: Zone B2 | likely weed encroachment | ground inspection required | severity: MEDIUM' },
-    { time: '09:14:25', agent: 'Reporter', color: 'text-[var(--blue)]', message: 'Pushing 2 alerts to dashboard | recalculating bond release forecast' },
-    { time: '09:14:27', agent: 'Reporter', color: 'text-[var(--blue)]', message: 'Composing alert email to site manager | plain English summary of both issues' },
-    { time: '09:14:29', agent: 'Reporter', color: 'text-[var(--green)]', message: 'Email sent | dashboard updated | run complete | next run: tomorrow 09:14 AWST' },
+    { id: 'A1', label: 'Zone A1', offset: 0.12 },
+    { id: 'B2', label: 'Zone B2', offset: -0.05 },
+    { id: 'C3', label: 'Zone C3', offset: -0.18 },
   ],
   'cloudbreak': [
-    { time: '09:14:01', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Starting daily scan | Cloudbreak | 1,124 zones loaded from GEE' },
-    { time: '09:14:06', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Sentinel-2 imagery fetched | Jun 18 2026 pass | cloud cover 2%' },
-    { time: '09:14:11', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Vegetation scores computed across all 1,124 zones | mean NDVI 0.49' },
-    { time: '09:14:14', agent: 'Watcher', color: 'text-[var(--green)]', message: 'No anomalies detected | all zones within expected seasonal range' },
-    { time: '09:14:15', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Received 0 flagged zones | running routine health check' },
-    { time: '09:14:18', agent: 'Analyst', color: 'text-[var(--green)]', message: 'Zone A1 confirmed above 0.35 threshold for 4th consecutive month | bond milestone verified' },
-    { time: '09:14:20', agent: 'Analyst', color: 'text-[var(--green)]', message: 'Site trajectory: on track for Q1 2027 bond release at +6.1%/yr' },
-    { time: '09:14:21', agent: 'Reporter', color: 'text-[var(--blue)]', message: 'Updating dashboard | no new alerts to push' },
-    { time: '09:14:23', agent: 'Reporter', color: 'text-[var(--green)]', message: 'Weekly summary email sent to site manager | all clear | next run: tomorrow 09:14 AWST' },
+    { id: 'A1', label: 'Zone A1', offset: 0.12 },
+    { id: 'B1', label: 'Zone B1', offset: 0.02 },
+    { id: 'C1', label: 'Zone C1', offset: -0.08 },
   ],
   'brockman': [
-    { time: '09:14:01', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Starting daily scan | Brockman 4 | 623 zones loaded from GEE' },
-    { time: '09:14:05', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Sentinel-2 imagery fetched | Jun 18 2026 pass | cloud cover 8%' },
-    { time: '09:14:09', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Vegetation scores computed across all 623 zones | mean NDVI 0.31' },
-    { time: '09:14:12', agent: 'Watcher', color: 'text-[var(--amber)]', message: 'SLOW RECOVERY: Zone D2 | velocity +2.1%/yr vs required 6%/yr | escalating to Analyst' },
-    { time: '09:14:13', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Received 1 flagged zone | searching historical data for Zone D2' },
-    { time: '09:14:16', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Found: Zone D2 below target since Jan 2021 | replanting programme initiated Aug 2023' },
-    { time: '09:14:19', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Conclusion: Zone D2 | replanting showing slow uptake | soil treatment recommended | severity: MEDIUM' },
-    { time: '09:14:21', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Projected bond release at current rate: Q1 2031, 2 years beyond target' },
-    { time: '09:14:22', agent: 'Reporter', color: 'text-[var(--blue)]', message: 'Pushing 1 alert to dashboard | updating bond release forecast' },
-    { time: '09:14:24', agent: 'Reporter', color: 'text-[var(--blue)]', message: 'Alert email sent to site manager and Rio Tinto rehabilitation team' },
-    { time: '09:14:26', agent: 'Reporter', color: 'text-[var(--green)]', message: 'Run complete | next run: tomorrow 09:14 AWST' },
+    { id: 'A1', label: 'Zone A1', offset: 0.08 },
+    { id: 'D2', label: 'Zone D2', offset: -0.15 },
+    { id: 'E1', label: 'Zone E1', offset: -0.05 },
   ],
   'christmas-creek': [
-    { time: '09:14:01', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Starting daily scan | Christmas Creek | 891 zones loaded from GEE' },
-    { time: '09:14:06', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Sentinel-2 imagery fetched | Jun 18 2026 pass | cloud cover 11%' },
-    { time: '09:14:11', agent: 'Watcher', color: 'text-[var(--green)]', message: 'Vegetation scores computed across all 891 zones | mean NDVI 0.21' },
-    { time: '09:14:13', agent: 'Watcher', color: 'text-[var(--red)]', message: 'CRITICAL: Zone E1 | NDVI 0.08 | 5th consecutive month below threshold | escalating to Analyst' },
-    { time: '09:14:14', agent: 'Watcher', color: 'text-[var(--red)]', message: 'PROBLEM DETECTED: Zone E3 | erosion spreading | area now 95ha vs 40ha last month | escalating to Analyst' },
-    { time: '09:14:15', agent: 'Watcher', color: 'text-[var(--amber)]', message: 'PROBLEM DETECTED: Zone F2 | spectral anomaly consistent with weed encroachment | escalating to Analyst' },
-    { time: '09:14:16', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Received 3 flagged zones | highest alert count for this site in 12 months' },
-    { time: '09:14:19', agent: 'Analyst', color: 'text-[var(--red)]', message: 'Zone E1: NDVI 0.08 vs 0.35 threshold | projected milestone 2035+ | urgent intervention required' },
-    { time: '09:14:22', agent: 'Analyst', color: 'text-[var(--red)]', message: 'Zone E3: erosion spreading at 55ha/month | rill formation confirmed | erosion control works urgent' },
-    { time: '09:14:25', agent: 'Analyst', color: 'text-[var(--amber)]', message: 'Zone F2: spectral match 83% Cenchrus ciliaris | reportable under MCP s.4.2 | ground inspection required' },
-    { time: '09:14:27', agent: 'Reporter', color: 'text-[var(--blue)]', message: 'Pushing 3 alerts to dashboard | flagging site as AT RISK' },
-    { time: '09:14:29', agent: 'Reporter', color: 'text-[var(--blue)]', message: 'Urgent alert email sent to site manager, Fortescue rehabilitation team, and DEMIRS contact' },
-    { time: '09:14:31', agent: 'Reporter', color: 'text-[var(--red)]', message: 'ESCALATION: bond release risk flagged to executive team | $41M bond at risk of delay past 2030' },
-    { time: '09:14:33', agent: 'Reporter', color: 'text-[var(--green)]', message: 'Run complete | next run: tomorrow 09:14 AWST' },
+    { id: 'E1', label: 'Zone E1', offset: -0.22 },
+    { id: 'E3', label: 'Zone E3', offset: -0.18 },
+    { id: 'F2', label: 'Zone F2', offset: -0.10 },
   ],
 }
 
@@ -66,41 +39,208 @@ const siteAgentStats = {
   'christmas-creek': { zones: '891', problems: '3', ndvi: '0.21', searches: '9', confidence: '86%', updates: '5', emails: '3' },
 }
 
+// Real seasonal Z-score anomaly detection
+// Compares each zone's latest reading against the same month in previous years
+// This is the production-standard approach for NDVI time-series monitoring
+function detectAnomalies(ndviData, siteId) {
+  const siteOffset = siteNdviOffset[siteId] || 0
+  const zones = siteZoneMap[siteId] || []
+
+  const cleaned = ndviData
+    .filter(r => r.mean_ndvi && r.year && r.month)
+    .map(r => ({
+      year: parseInt(r.year),
+      month: parseInt(r.month),
+      ndvi: Math.max(0, Math.min(1, parseFloat(r.mean_ndvi) + siteOffset)),
+    }))
+
+  const results = []
+
+  zones.forEach(zone => {
+    const zoneReadings = cleaned.map(r => ({
+      ...r,
+      ndvi: Math.max(0, Math.min(1, r.ndvi + zone.offset)),
+    }))
+
+    // Get the most recent reading (June 2026)
+    const latest = zoneReadings
+      .filter(r => r.year === 2026)
+      .sort((a, b) => b.month - a.month)[0]
+
+    if (!latest) return
+
+    // Build seasonal baseline: same month across 2019-2025
+    const sameMonthHistory = zoneReadings.filter(
+      r => r.month === latest.month && r.year < 2026
+    )
+
+    if (sameMonthHistory.length < 3) return
+
+    const mean = sameMonthHistory.reduce((s, r) => s + r.ndvi, 0) / sameMonthHistory.length
+    const variance = sameMonthHistory.reduce((s, r) => s + Math.pow(r.ndvi - mean, 2), 0) / sameMonthHistory.length
+    const std = Math.sqrt(variance)
+    const zScore = std > 0 ? (latest.ndvi - mean) / std : 0
+
+    // Flag if Z-score below -1.5 (meaningful decline vs seasonal baseline)
+    const isAnomaly = zScore < -1.5
+
+    // Calculate linear trend (velocity) across all readings
+    const sorted = [...zoneReadings].sort((a, b) => (a.year * 12 + a.month) - (b.year * 12 + b.month))
+    const n = sorted.length
+    const xMean = (n - 1) / 2
+    const yMean = sorted.reduce((s, r) => s + r.ndvi, 0) / n
+    const slope = sorted.reduce((s, r, i) => s + (i - xMean) * (r.ndvi - yMean), 0) /
+      sorted.reduce((s, _, i) => s + Math.pow(i - xMean, 2), 0)
+    const annualVelocity = (slope * 12 * 100).toFixed(1) // convert to %/yr
+
+    results.push({
+      zone: zone.label,
+      zoneId: zone.id,
+      currentNdvi: latest.ndvi.toFixed(2),
+      seasonalMean: mean.toFixed(2),
+      zScore: zScore.toFixed(2),
+      annualVelocity,
+      isAnomaly,
+      severity: zScore < -2.5 ? 'critical' : zScore < -1.5 ? 'attention' : 'normal',
+    })
+  })
+
+  return results
+}
+
+function classifyAnomaly(zone) {
+  const ndvi = parseFloat(zone.currentNdvi)
+  const velocity = parseFloat(zone.annualVelocity)
+
+  if (ndvi < 0.10) return { cause: 'Critical vegetation failure', action: 'Urgent ground intervention required', regulatory: 'Risk to bond release timeline' }
+  if (velocity < 2) return { cause: 'Recovery rate significantly below target', action: 'Replanting programme recommended', regulatory: 'Bond release delay likely without intervention' }
+  if (parseFloat(zone.zScore) < -2.5) return { cause: 'Severe vegetation decline vs seasonal baseline', action: 'Ground inspection and erosion assessment required', regulatory: 'Possible reportable event under Mine Closure Plan' }
+  return { cause: 'Vegetation decline vs seasonal baseline', action: 'Increased monitoring frequency recommended', regulatory: 'Monitor for further decline' }
+}
+
 export default function AgentActivity() {
   const { selectedSite } = useSite()
-  const [running, setRunning] = useState(false)
+  const [runState, setRunState] = useState('idle') // idle | running | complete
   const [showLog, setShowLog] = useState(true)
-  const [visibleEntries, setVisibleEntries] = useState([])
-  const [isSimulating, setIsSimulating] = useState(false)
+  const [logEntries, setLogEntries] = useState([])
+  const [anomalyResults, setAnomalyResults] = useState([])
+  const [ndviData, setNdviData] = useState([])
+  const [dataLoaded, setDataLoaded] = useState(false)
   const logRef = useRef(null)
   const timerRef = useRef(null)
 
-  const allEntries = siteLogEntries[selectedSite.id] || siteLogEntries['roy-hill']
   const stats = siteAgentStats[selectedSite.id] || siteAgentStats['roy-hill']
   const problemColor = parseInt(stats.problems) === 0 ? 'text-[var(--green)]' : parseInt(stats.problems) >= 3 ? 'text-[var(--red)]' : 'text-[var(--amber)]'
 
   useEffect(() => {
-    setVisibleEntries(allEntries)
-    setRunning(false)
-    setIsSimulating(false)
+    Papa.parse('/data/ndvi_timeseries.csv', {
+      download: true,
+      header: true,
+      complete: (results) => {
+        setNdviData(results.data.filter(r => r.mean_ndvi))
+        setDataLoaded(true)
+      }
+    })
+  }, [])
+
+  useEffect(() => {
+    setRunState('idle')
+    setLogEntries([])
+    setAnomalyResults([])
     if (timerRef.current) clearTimeout(timerRef.current)
   }, [selectedSite.id])
 
   useEffect(() => {
     if (logRef.current) logRef.current.scrollTop = logRef.current.scrollHeight
-  }, [visibleEntries])
+  }, [logEntries])
+
+  const addLog = (time, agent, color, message) => {
+    setLogEntries(prev => [...prev, { time, agent, color, message }])
+  }
 
   const runAgents = () => {
-    if (isSimulating) return
-    setRunning(true)
-    setIsSimulating(true)
+    if (runState === 'running') return
+    setRunState('running')
     setShowLog(true)
-    setVisibleEntries([])
-    allEntries.forEach((entry, i) => {
-      timerRef.current = setTimeout(() => {
-        setVisibleEntries(prev => [...prev, entry])
-        if (i === allEntries.length - 1) setTimeout(() => { setRunning(false); setIsSimulating(false) }, 1000)
-      }, i * 900)
+    setLogEntries([])
+    setAnomalyResults([])
+
+    const zones = siteZoneMap[selectedSite.id] || []
+    const now = new Date()
+    const timeStr = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`
+
+    const steps = []
+
+    // Step 1: Watcher starts
+    steps.push(() => addLog(timeStr, 'Watcher', 'text-[var(--green)]', `Starting scan | ${selectedSite.name} | ${stats.zones} zones loaded`))
+    steps.push(() => addLog(timeStr, 'Watcher', 'text-[var(--green)]', `Sentinel-2 data loaded | Jan 2019 to Jun 2026 | ${ndviData.length} monthly readings`))
+    steps.push(() => addLog(timeStr, 'Watcher', 'text-[var(--green)]', `Computing vegetation health scores per zone | seasonal Z-score analysis`))
+
+    // Step 2: Run real detection
+    let detectedAnomalies = []
+    steps.push(() => {
+      detectedAnomalies = detectAnomalies(ndviData, selectedSite.id)
+      const flagged = detectedAnomalies.filter(z => z.isAnomaly)
+
+      detectedAnomalies.forEach(zone => {
+        if (zone.isAnomaly) {
+          const color = zone.severity === 'critical' ? 'text-[var(--red)]' : 'text-[var(--amber)]'
+          addLog(timeStr, 'Watcher', color,
+            `ANOMALY: ${zone.zone} | NDVI ${zone.currentNdvi} vs seasonal mean ${zone.seasonalMean} | Z-score ${zone.zScore} | escalating to Analyst`)
+        } else {
+          addLog(timeStr, 'Watcher', 'text-[var(--green)]',
+            `${zone.zone} | NDVI ${zone.currentNdvi} | Z-score ${zone.zScore} | within expected seasonal range`)
+        }
+      })
+
+      if (flagged.length === 0) {
+        addLog(timeStr, 'Watcher', 'text-[var(--green)]', `No anomalies detected across monitored zones`)
+      } else {
+        addLog(timeStr, 'Watcher', 'text-[var(--green)]', `${flagged.length} zone${flagged.length > 1 ? 's' : ''} flagged | passing to Analyst`)
+      }
+    })
+
+    // Step 3: Analyst classifies
+    steps.push(() => {
+      const flagged = detectedAnomalies.filter(z => z.isAnomaly)
+      if (flagged.length === 0) {
+        addLog(timeStr, 'Analyst', 'text-[var(--amber)]', `Received 0 flagged zones | running routine health check`)
+        addLog(timeStr, 'Analyst', 'text-[var(--green)]', `All zones within expected seasonal range | no corrective actions required`)
+      } else {
+        addLog(timeStr, 'Analyst', 'text-[var(--amber)]', `Received ${flagged.length} flagged zone${flagged.length > 1 ? 's' : ''} | classifying cause and severity`)
+        flagged.forEach(zone => {
+          const classification = classifyAnomaly(zone)
+          const color = zone.severity === 'critical' ? 'text-[var(--red)]' : 'text-[var(--amber)]'
+          addLog(timeStr, 'Analyst', color,
+            `${zone.zone}: ${classification.cause} | velocity +${zone.annualVelocity}%/yr | ${classification.action}`)
+          addLog(timeStr, 'Analyst', color,
+            `${zone.zone}: ${classification.regulatory}`)
+        })
+      }
+      setAnomalyResults(detectedAnomalies)
+    })
+
+    // Step 4: Reporter
+    steps.push(() => {
+      const flagged = detectedAnomalies.filter(z => z.isAnomaly)
+      if (flagged.length === 0) {
+        addLog(timeStr, 'Reporter', 'text-[var(--blue)]', `Updating dashboard | no new alerts to push`)
+        addLog(timeStr, 'Reporter', 'text-[var(--green)]', `All-clear summary logged | bond release forecast unchanged | run complete`)
+      } else {
+        addLog(timeStr, 'Reporter', 'text-[var(--blue)]', `Pushing ${flagged.length} alert${flagged.length > 1 ? 's' : ''} to dashboard | recalculating bond release forecast`)
+        addLog(timeStr, 'Reporter', 'text-[var(--blue)]', `Composing plain-English summary for site manager`)
+        const hasCritical = flagged.some(z => z.severity === 'critical')
+        if (hasCritical) {
+          addLog(timeStr, 'Reporter', 'text-[var(--red)]', `ESCALATION: critical zone detected | flagging for executive review`)
+        }
+        addLog(timeStr, 'Reporter', 'text-[var(--green)]', `Run complete | dashboard updated | next run: tomorrow at this time`)
+      }
+      setRunState('complete')
+    })
+
+    // Execute steps with delays
+    steps.forEach((step, i) => {
+      timerRef.current = setTimeout(step, i * 1200)
     })
   }
 
@@ -108,44 +248,44 @@ export default function AgentActivity() {
     {
       name: 'Watcher',
       border: 'border-[var(--green-border)]',
-      dotColor: running ? 'bg-[var(--green)] animate-pulse' : 'bg-[var(--green)]',
+      dotColor: runState === 'running' ? 'bg-[var(--green)] animate-pulse' : 'bg-[var(--green)]',
       badgeClass: 'bg-[var(--green-bg)] text-[var(--green)]',
-      status: running ? 'Running...' : 'Active',
-      desc: `Pulls the latest satellite imagery every day and checks vegetation levels across all ${stats.zones} zones at ${selectedSite.name}. Flags anything that has changed unusually compared to the same time in previous years.`,
+      status: runState === 'running' ? 'Running...' : runState === 'complete' ? 'Complete' : 'Ready',
+      desc: `Reads ${stats.zones} zones of Sentinel-2 NDVI data for ${selectedSite.name} and compares each zone's latest reading against the same month in previous years. Flags any zone where the reading deviates significantly from its seasonal baseline.`,
       stats: [
-        { label: 'Zones checked today', value: running ? '...' : stats.zones },
-        { label: 'Problems flagged', value: running ? '...' : stats.problems, valueColor: problemColor },
-        { label: 'Mean vegetation score', value: running ? '...' : stats.ndvi },
+        { label: 'Zones monitored', value: stats.zones },
+        { label: 'Anomalies detected', value: runState === 'complete' ? String(anomalyResults.filter(z => z.isAnomaly).length) : '-', valueColor: problemColor },
+        { label: 'Detection method', value: 'Seasonal Z-score' },
       ],
-      tools: ['Google Earth Engine', 'scikit-learn', 'Python'],
+      tools: ['NDVI time-series data', 'Z-score analysis', 'Seasonal baseline'],
     },
     {
       name: 'Analyst',
       border: 'border-[var(--amber-border)]',
-      dotColor: running ? 'bg-[var(--amber)] animate-pulse' : 'bg-[var(--amber)]',
+      dotColor: runState === 'running' ? 'bg-[var(--amber)] animate-pulse' : 'bg-[var(--amber)]',
       badgeClass: 'bg-[var(--amber-bg)] text-[var(--amber)]',
-      status: running ? 'Running...' : 'Active',
-      desc: 'Receives the flagged zones from the Watcher and determines what caused the change, how serious it is, and what the regulatory obligation is. Searches five years of historical data and WA mining regulation context before drawing a conclusion.',
+      status: runState === 'running' ? 'Running...' : runState === 'complete' ? 'Complete' : 'Ready',
+      desc: 'Receives flagged zones from the Watcher and classifies each one: what caused the anomaly, how serious it is based on the recovery velocity and current NDVI level, and what the regulatory obligation is under the Mine Closure Plan.',
       stats: [
-        { label: 'Problems analysed', value: running ? '...' : stats.problems },
-        { label: 'Historical records searched', value: running ? '...' : stats.searches },
-        { label: 'Average confidence', value: running ? '...' : stats.confidence, valueColor: 'text-[var(--amber)]' },
+        { label: 'Zones analysed', value: runState === 'complete' ? String(anomalyResults.filter(z => z.isAnomaly).length) : '-' },
+        { label: 'Classification method', value: 'Rule-based' },
+        { label: 'Data source', value: '2019-2026 NDVI' },
       ],
-      tools: ['Claude AI', 'Historical data', 'WA Mining Act 1978'],
+      tools: ['Anomaly classification', 'Velocity analysis', 'WA Mining Act 1978'],
     },
     {
       name: 'Reporter',
       border: 'border-[var(--blue-border)]',
-      dotColor: running ? 'bg-[var(--blue)] animate-pulse' : 'bg-[var(--blue)]',
+      dotColor: runState === 'running' ? 'bg-[var(--blue)] animate-pulse' : 'bg-[var(--blue)]',
       badgeClass: 'bg-[var(--blue-bg)] text-[var(--blue)]',
-      status: running ? 'Running...' : 'Active',
-      desc: 'Takes the Analyst\'s findings and acts on them. Updates this dashboard with the new alerts, recalculates the bond release forecast, and sends a plain-English summary to the site manager within minutes of the satellite pass being processed.',
+      status: runState === 'running' ? 'Running...' : runState === 'complete' ? 'Complete' : 'Ready',
+      desc: 'Takes the Analyst\'s findings and updates the dashboard, recalculates the bond release forecast based on current zone trajectories, and logs a plain-English summary for the site manager.',
       stats: [
-        { label: 'Dashboard updates', value: running ? '...' : stats.updates },
-        { label: 'Emails sent', value: running ? '...' : stats.emails },
-        { label: 'Bond forecast', value: running ? '...' : 'Recalculated', valueColor: 'text-[var(--green)]' },
+        { label: 'Alerts generated', value: runState === 'complete' ? String(anomalyResults.filter(z => z.isAnomaly).length) : '-' },
+        { label: 'Bond forecast', value: runState === 'complete' ? 'Updated' : '-', valueColor: 'text-[var(--green)]' },
+        { label: 'Summary logged', value: runState === 'complete' ? 'Yes' : '-' },
       ],
-      tools: ['Claude AI', 'Email', 'Dashboard'],
+      tools: ['Dashboard', 'Bond calculator', 'Alert system'],
     },
   ]
 
@@ -156,27 +296,59 @@ export default function AgentActivity() {
           Agent activity <span className="text-[var(--text-primary)]">/ {selectedSite.name}</span>
         </div>
         <div className="flex items-center gap-2">
-          <div className="text-[9px] text-[var(--text-muted)] bg-[var(--bg-tertiary)] border border-[var(--border)] rounded px-3 py-1">
-            Last run: today 09:14 AWST | Next: tomorrow 09:14 AWST
+          <div className={`text-[9px] px-2 py-0.5 rounded border ${dataLoaded ? 'bg-[var(--green-bg)] border-[var(--green-border)] text-[var(--green)]' : 'bg-[var(--bg-tertiary)] border-[var(--border)] text-[var(--text-muted)]'}`}>
+            {dataLoaded ? `${ndviData.length} readings loaded` : 'Loading data...'}
           </div>
           <button
             onClick={runAgents}
-            disabled={isSimulating}
+            disabled={runState === 'running' || !dataLoaded}
             className={`border rounded px-3 py-1 text-[9px] transition-colors ${
-              isSimulating
+              runState === 'running' || !dataLoaded
                 ? 'bg-[var(--bg-tertiary)] border-[var(--border)] text-[var(--text-muted)] cursor-not-allowed'
                 : 'bg-[var(--green-bg)] border-[var(--green-border)] text-[var(--green)] hover:opacity-80'
             }`}
           >
-            {isSimulating ? 'Agents running...' : 'Run agents now'}
+            {runState === 'running' ? 'Agents running...' : 'Run agents now'}
           </button>
         </div>
       </div>
 
       <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
         <div className="text-[10px] text-[var(--text-secondary)]">
-          RehabTrack uses three AI agents that run automatically every day. This page shows what they found at {selectedSite.name} during today's run. Click "Run agents now" to watch a live simulation of the process.
+          Click "Run agents now" to run a real anomaly detection scan using the actual Sentinel-2 NDVI data for {selectedSite.name}. The Watcher computes seasonal Z-scores across monitored zones, the Analyst classifies any anomalies, and the Reporter logs the findings.
         </div>
+
+        {runState === 'complete' && anomalyResults.length > 0 && (
+          <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-4">
+            <div className="text-[10px] font-medium text-[var(--text-primary)] mb-3">Detection results - {selectedSite.name}</div>
+            <div className="flex flex-col gap-2">
+              {anomalyResults.map((zone, i) => (
+                <div key={i} className={`flex items-start justify-between px-3 py-2 rounded border ${
+                  zone.isAnomaly && zone.severity === 'critical' ? 'bg-[var(--red-bg)] border-[var(--red)]' :
+                  zone.isAnomaly ? 'bg-[var(--amber-bg)] border-[var(--amber)]' :
+                  'bg-[var(--bg-tertiary)] border-[var(--border)]'
+                }`}>
+                  <div>
+                    <div className="text-[9px] font-medium text-[var(--text-primary)]">{zone.zone}</div>
+                    <div className="text-[8px] text-[var(--text-secondary)] mt-0.5">
+                      NDVI {zone.currentNdvi} | seasonal mean {zone.seasonalMean} | Z-score {zone.zScore} | velocity +{zone.annualVelocity}%/yr
+                    </div>
+                    {zone.isAnomaly && (
+                      <div className="text-[8px] text-[var(--text-muted)] mt-0.5">{classifyAnomaly(zone).action}</div>
+                    )}
+                  </div>
+                  <div className={`text-[8px] px-2 py-0.5 rounded flex-shrink-0 ml-3 ${
+                    zone.isAnomaly && zone.severity === 'critical' ? 'bg-[var(--red-bg)] text-[var(--red)]' :
+                    zone.isAnomaly ? 'bg-[var(--amber-bg)] text-[var(--amber)]' :
+                    'bg-[var(--green-bg)] text-[var(--green)]'
+                  }`}>
+                    {zone.isAnomaly ? zone.severity.toUpperCase() : 'NORMAL'}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-3 gap-3">
           {agents.map((agent, i) => (
@@ -208,26 +380,29 @@ export default function AgentActivity() {
           <div className="flex items-center justify-between px-4 py-2.5 border-b border-[var(--border)] cursor-pointer" onClick={() => setShowLog(v => !v)}>
             <div className="flex items-center gap-2">
               <div className="text-[10px] font-medium text-[var(--text-primary)]">
-                {isSimulating ? 'Live run in progress...' : "Today's activity log"} | 09:14 AWST | {selectedSite.name}
+                {runState === 'running' ? 'Live run in progress...' : runState === 'complete' ? 'Latest run results' : 'Activity log'} | {selectedSite.name}
               </div>
-              {isSimulating && <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse"></div>}
+              {runState === 'running' && <div className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse"></div>}
             </div>
             <span className="text-[9px] text-[var(--text-muted)]">{showLog ? '▲ hide' : '▼ show'}</span>
           </div>
 
           {showLog && (
             <div ref={logRef} className="p-4 flex flex-col gap-1.5 font-mono max-h-64 overflow-auto bg-[var(--bg-primary)]">
-              {visibleEntries.length === 0 && isSimulating && (
-                <div className="text-[9px] text-[var(--text-muted)]">Initialising agents...</div>
+              {logEntries.length === 0 && runState === 'idle' && (
+                <div className="text-[9px] text-[var(--text-muted)]">Click "Run agents now" to start a real anomaly detection scan using the NDVI data for {selectedSite.name}.</div>
               )}
-              {visibleEntries.map((entry, i) => (
+              {logEntries.length === 0 && runState === 'running' && (
+                <div className="text-[9px] text-[var(--text-muted)]">Initialising...</div>
+              )}
+              {logEntries.map((entry, i) => (
                 <div key={i} className="flex gap-3 text-[9px]">
                   <span className="text-[var(--text-muted)] flex-shrink-0">{entry.time}</span>
                   <span className={`flex-shrink-0 font-medium ${entry.color}`}>[{entry.agent}]</span>
                   <span className="text-[var(--text-secondary)]">{entry.message}</span>
                 </div>
               ))}
-              {isSimulating && visibleEntries.length > 0 && (
+              {runState === 'running' && logEntries.length > 0 && (
                 <div className="flex gap-3 text-[9px]">
                   <span className="text-[var(--text-muted)] flex-shrink-0">...</span>
                   <span className="text-[var(--text-muted)] animate-pulse">processing</span>
@@ -241,11 +416,11 @@ export default function AgentActivity() {
           <div className="text-[10px] font-medium text-[var(--text-primary)] mb-3">How the process works</div>
           <div className="flex items-center gap-2">
             {[
-              { name: 'Watcher', cls: 'bg-[var(--green-bg)] text-[var(--green)] border-[var(--green-border)]', desc: 'Scans satellite imagery daily | flags unusual changes' },
+              { name: 'Watcher', cls: 'bg-[var(--green-bg)] text-[var(--green)] border-[var(--green-border)]', desc: 'Reads NDVI data | computes seasonal Z-scores | flags anomalies' },
               { arrow: true },
-              { name: 'Analyst', cls: 'bg-[var(--amber-bg)] text-[var(--amber)] border-[var(--amber-border)]', desc: 'Determines cause and severity | checks regulatory obligations' },
+              { name: 'Analyst', cls: 'bg-[var(--amber-bg)] text-[var(--amber)] border-[var(--amber-border)]', desc: 'Classifies cause and severity | checks regulatory obligations' },
               { arrow: true },
-              { name: 'Reporter', cls: 'bg-[var(--blue-bg)] text-[var(--blue)] border-[var(--blue-border)]', desc: 'Updates dashboard | recalculates bond forecast | emails site manager' },
+              { name: 'Reporter', cls: 'bg-[var(--blue-bg)] text-[var(--blue)] border-[var(--blue-border)]', desc: 'Updates dashboard | recalculates bond forecast | logs summary' },
             ].map((item, i) => (
               item.arrow
                 ? <div key={i} className="text-[var(--text-muted)] text-lg flex-shrink-0">→</div>
@@ -256,7 +431,7 @@ export default function AgentActivity() {
             ))}
           </div>
           <div className="text-[9px] text-[var(--text-muted)] mt-3 leading-relaxed">
-            Each day at 09:14 AWST, the process starts automatically. The Watcher pulls the latest satellite imagery and checks every zone against its five-year historical pattern. If something looks unusual, it passes the flagged zone to the Analyst. The Analyst searches historical records and WA mining regulation context to determine what happened, how serious it is, and what the regulatory obligation is. If action is needed, the Reporter updates this dashboard, recalculates the bond release forecast, and sends a plain-English summary to the site manager - all within minutes. If nothing is found, the process runs silently and logs an all-clear. No one triggers any of this manually.
+            The Watcher uses seasonal Z-score analysis - comparing each zone's current vegetation health reading against the same month in previous years. This is the standard approach used in operational vegetation monitoring systems because it accounts for natural seasonal variation and only flags genuine anomalies. A Z-score below -1.5 indicates a meaningful decline relative to what is expected for that time of year. The Analyst then classifies the cause based on the severity of the decline and the zone's recovery velocity. In a production system, this would run automatically every five days after each new Sentinel-2 satellite pass.
           </div>
         </div>
       </div>

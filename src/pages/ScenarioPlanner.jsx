@@ -27,7 +27,9 @@ export default function ScenarioPlanner() {
   const [analysis, setAnalysis] = useState('')
   const [loading, setLoading] = useState(false)
   const [hasAnalysis, setHasAnalysis] = useState(false)
+  const [view, setView] = useState('executive')
 
+  const isAnalyst = view === 'analyst'
   const selectedIntervention = interventions.find(i => i.id === intervention)
   const selectedFactor = externalFactors.find(f => f.id === externalFactor)
   const baseGrowth = selectedSite.growthRate
@@ -48,7 +50,11 @@ export default function ScenarioPlanner() {
 
   const chartData = Array.from({ length: Math.ceil(timeframe * 2) + 1 }, (_, i) => {
     const year = 2026 + i * 0.5
-    return { year: year.toFixed(1), withIntervention: Math.min(100, currentPct + adjustedGrowth * i * 0.5), withoutIntervention: Math.min(100, currentPct + baseGrowth * i * 0.5) }
+    return {
+      year: year.toFixed(1),
+      withIntervention: Math.min(100, currentPct + adjustedGrowth * i * 0.5),
+      withoutIntervention: Math.min(100, currentPct + baseGrowth * i * 0.5),
+    }
   })
 
   const buildPrompt = () => {
@@ -58,18 +64,60 @@ export default function ScenarioPlanner() {
     const siteIsStruggling = selectedSite.growthRate < 4
 
     let toneGuidance = ''
-
     if (isDoNothing) {
-      toneGuidance = `This is a risk brief, not a neutral analysis. The operator has chosen to do nothing. Write this as a frank assessment of the financial and regulatory consequences of inaction. State clearly what will happen to the bond, the timeline, and the site's compliance position if nothing changes. Do not soften this. The cost of inaction should be the central message. End with a single direct sentence stating what you recommend instead and why acting now rather than later matters financially.`
+      toneGuidance = `This is a risk brief, not a neutral analysis. Write as a frank assessment of the financial and regulatory consequences of inaction. The cost of inaction must be the central message. Do not soften this.`
     } else if (isCyclone) {
-      toneGuidance = `A cyclone event introduces conditions that are genuinely difficult to model with precision. Acknowledge this honestly. Do not present projections as confident. Explain what the numbers suggest under this scenario, but note that cyclone impacts on rehabilitation programmes are highly variable and dependent on timing, track, and site-specific drainage conditions. Recommend contingency planning and a post-event ground assessment protocol as the most important actions, regardless of the intervention chosen. End with a single direct sentence on what the operator should do now to reduce exposure to this risk.`
+      toneGuidance = `Acknowledge that cyclone impacts are genuinely difficult to model. Do not present projections as confident. Note that outcomes depend heavily on timing, track, and site drainage conditions. Recommend contingency planning as the priority action.`
     } else if (siteIsStruggling) {
-      toneGuidance = `This site is already significantly behind its rehabilitation targets. The analysis should reflect that urgency. Do not frame interventions optimistically. Be direct about whether the proposed intervention is sufficient given where the site currently stands, or whether a more substantial programme is required. If the numbers show the intervention helps but is still not enough to meet the bond release target on time, say so. End with a single direct sentence on what the operator should realistically plan for.`
+      toneGuidance = `This site is significantly behind its rehabilitation targets. Be direct about whether the proposed intervention is sufficient or whether a more substantial programme is required. If the intervention helps but is still not enough to meet the target on time, say so.`
     } else {
-      toneGuidance = `Write a balanced, direct analysis. If the intervention makes financial sense, say so clearly. If it does not, say so equally clearly. Do not hedge unnecessarily. End with a single direct sentence recommending a specific course of action and why it is the right call given the site's current position.`
+      toneGuidance = `Write a balanced, direct analysis. If the intervention makes financial sense, say so clearly. If it does not, say so equally clearly.`
     }
 
-    return `You are a senior mining rehabilitation advisor providing scenario analysis for ${selectedSite.name} in the Pilbara, Western Australia.
+    if (isAnalyst) {
+      return `You are a senior mining rehabilitation analyst providing technical scenario analysis for ${selectedSite.name} in the Pilbara, Western Australia.
+
+Current site position:
+- Land recovered: ${selectedSite.recovered}% of ${selectedSite.area.toLocaleString()} hectares
+- Annual NDVI velocity: +${selectedSite.growthRate}%/yr (regulatory target: 6%/yr)
+- Bond lodged: $${(selectedSite.bond / 1000000).toFixed(0)}M with WA government
+- Current projected bond release: ${selectedSite.release}
+- Site status: ${selectedSite.status}
+
+Scenario:
+- Intervention: ${selectedIntervention.label} - ${selectedIntervention.desc}
+- External conditions: ${selectedFactor.label}
+- Timeframe: ${timeframe} years
+- Upfront cost: ${costStr}
+- Adjusted NDVI velocity: +${adjustedGrowth.toFixed(1)}%/yr
+- Projected release: ${releaseQuarter} ${releaseYearInt}
+${monthsSaved > 0 ? `- Time recovered: ${monthsSaved} months` : monthsSaved < 0 ? `- Additional delay: ${Math.abs(monthsSaved)} months` : '- No change to timeline'}
+${netBenefit > 0 ? `- Net financial benefit: $${netBenefit.toLocaleString()}` : `- Net cost: $${Math.abs(netBenefit).toLocaleString()}`}
+
+${toneGuidance}
+
+Respond in ANALYST mode with bullet points only. Use this exact structure with these section labels:
+
+Site trajectory:
+- [bullet on current NDVI velocity vs target]
+- [bullet on projected milestone date under this scenario]
+- [bullet on Z-score context or seasonal trend if relevant]
+
+Financial analysis:
+- [bullet on intervention cost]
+- [bullet on financing costs saved or lost]
+- [bullet on net benefit or net cost with specific figures]
+
+Regulatory position:
+- [bullet on compliance status]
+- [bullet on any reportable obligations or bond release implications]
+
+Recommendation:
+- [single direct bullet stating the recommended action and why]
+
+Use hyphens for bullets. No markdown headers with # symbols. No em dashes. No asterisks. Use precise technical language with NDVI values, velocity figures, and dollar amounts throughout.`
+    } else {
+      return `You are a senior mining rehabilitation advisor providing scenario analysis for ${selectedSite.name} in the Pilbara, Western Australia.
 
 Current site position:
 - Land recovered: ${selectedSite.recovered}% of ${selectedSite.area.toLocaleString()} hectares
@@ -78,24 +126,34 @@ Current site position:
 - Current projected bond release: ${selectedSite.release}
 - Site status: ${selectedSite.status}
 
-Scenario under analysis:
+Scenario:
 - Decision: ${selectedIntervention.label} - ${selectedIntervention.desc}
 - External conditions: ${selectedFactor.label}
-- Timeframe modelled: ${timeframe} years
+- Timeframe: ${timeframe} years
 - Upfront cost: ${costStr}
-- Adjusted recovery rate under this scenario: +${adjustedGrowth.toFixed(1)}% per year
-- Projected bond release under this scenario: ${releaseQuarter} ${releaseYearInt}
-${monthsSaved > 0 ? `- Time saved vs current trajectory: ${monthsSaved} months` : monthsSaved < 0 ? `- Additional delay vs current trajectory: ${Math.abs(monthsSaved)} months` : '- No change to current timeline'}
-${netBenefit > 0 ? `- Estimated net financial benefit: $${netBenefit.toLocaleString()} (financing costs recovered minus intervention cost)` : `- Estimated net cost after accounting for financing savings: $${Math.abs(netBenefit).toLocaleString()}`}
+- Adjusted recovery rate: +${adjustedGrowth.toFixed(1)}% per year
+- Projected bond release: ${releaseQuarter} ${releaseYearInt}
+${monthsSaved > 0 ? `- Time saved: ${monthsSaved} months` : monthsSaved < 0 ? `- Additional delay: ${Math.abs(monthsSaved)} months` : '- No change to timeline'}
+${netBenefit > 0 ? `- Estimated net financial benefit: $${netBenefit.toLocaleString()}` : `- Estimated net cost: $${Math.abs(netBenefit).toLocaleString()}`}
 
 ${toneGuidance}
 
-Write three short paragraphs:
-1. What happens to the site under this scenario and what that means for the bond release timeline
-2. The financial case - whether the numbers justify this decision, with specific figures
-3. Your recommendation
+Respond in EXECUTIVE mode with bullet points only. Use plain English throughout - no technical measurements, no zone codes, no jargon. Use this exact structure with these section labels:
 
-Be specific. Use the actual site name, dollar figures, and dates. Do not use markdown headers. Do not use long dashes or em dashes. Use hyphens or commas instead. No asterisks or bold text.`
+What happens to the site:
+- [bullet on recovery outcome in plain terms]
+- [bullet on bond release timing and what it means]
+
+The financial case:
+- [bullet on what the intervention costs]
+- [bullet on what it saves or costs in financing terms]
+- [bullet on the net position in plain dollar terms]
+
+What to do:
+- [single direct bullet stating the recommendation and why now matters]
+
+Use hyphens for bullets. No markdown headers with # symbols. No em dashes. No asterisks. Relate everything to dollars, dates, and decisions. Do not use zone codes - describe areas in plain terms.`
+    }
   }
 
   const runAnalysis = async () => {
@@ -103,7 +161,15 @@ Be specific. Use the actual site name, dollar figures, and dates. Do not use mar
     setAnalysis('')
     setHasAnalysis(true)
     try {
-      const response = await fetch(apiUrl, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ model: 'claude-haiku-4-5', max_tokens: 1024, messages: [{ role: 'user', content: buildPrompt() }] }) })
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-haiku-4-5',
+          max_tokens: 1024,
+          messages: [{ role: 'user', content: buildPrompt() }],
+        }),
+      })
       const data = await response.json()
       setAnalysis(data.content[0].text)
     } catch (err) {
@@ -118,13 +184,46 @@ Be specific. Use the actual site name, dollar figures, and dates. Do not use mar
     ? { bg: 'bg-[var(--red-bg)]', border: 'border-[var(--red-border)]', text: 'text-[var(--red)]' }
     : { bg: 'bg-[var(--amber-bg)]', border: 'border-[var(--amber-border)]', text: 'text-[var(--amber)]' }
 
+  // Parse bullet point sections from Claude response
+  const renderAnalysis = (text) => {
+    if (!text) return null
+    const lines = text.split('\n').filter(l => l.trim())
+    return lines.map((line, i) => {
+      const trimmed = line.trim()
+      if (trimmed.endsWith(':') && !trimmed.startsWith('-')) {
+        return (
+          <div key={i} className="text-[10px] font-medium text-[var(--text-primary)] mt-3 mb-1 first:mt-0">
+            {trimmed}
+          </div>
+        )
+      }
+      if (trimmed.startsWith('-')) {
+        return (
+          <div key={i} className="flex gap-2 text-[9px] text-[var(--text-secondary)] mb-1">
+            <span className="text-[var(--green)] flex-shrink-0">-</span>
+            <span>{trimmed.slice(1).trim()}</span>
+          </div>
+        )
+      }
+      return (
+        <div key={i} className="text-[9px] text-[var(--text-secondary)] mb-1">{trimmed}</div>
+      )
+    })
+  }
+
   return (
     <div className="flex flex-col h-full">
       <div className="h-10 bg-[var(--bg-secondary)] border-b border-[var(--border)] flex items-center justify-between px-4 flex-shrink-0">
         <div className="text-[10px] text-[var(--text-secondary)]">
           Scenario planner <span className="text-[var(--text-primary)]">/ {selectedSite.name}</span>
         </div>
-        <span className="text-[8px] px-2 py-0.5 rounded bg-[var(--green-bg)] text-[var(--green)]">Claude AI</span>
+        <div className="flex items-center gap-2">
+          <div className="bg-[var(--bg-elevated)] border border-[var(--border)] rounded-full p-0.5 flex gap-0.5">
+            <button onClick={() => { setView('executive'); setHasAnalysis(false) }} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${!isAnalyst ? 'bg-[var(--green-bg)] text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>Executive</button>
+            <button onClick={() => { setView('analyst'); setHasAnalysis(false) }} className={`px-3 py-1 rounded-full text-[9px] transition-colors ${isAnalyst ? 'bg-[var(--green-bg)] text-[var(--green)]' : 'text-[var(--text-muted)]'}`}>Analyst</button>
+          </div>
+          <span className="text-[8px] px-2 py-0.5 rounded bg-[var(--green-bg)] text-[var(--green)]">Claude AI</span>
+        </div>
       </div>
 
       <div className="flex-1 overflow-auto p-4 flex flex-col gap-4">
@@ -189,12 +288,16 @@ Be specific. Use the actual site name, dollar figures, and dates. Do not use mar
               </div>
               <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-3">
                 <div className="text-[8px] text-[var(--text-muted)] mb-1">Financing cost saved</div>
-                <div className={`text-[16px] font-medium ${financingCostSaved > 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>{financingCostSaved > 0 ? `$${(financingCostSaved / 1000).toFixed(0)}k` : '$0'}</div>
+                <div className={`text-[16px] font-medium ${financingCostSaved > 0 ? 'text-[var(--green)]' : 'text-[var(--red)]'}`}>
+                  {financingCostSaved > 0 ? `$${(financingCostSaved / 1000).toFixed(0)}k` : '$0'}
+                </div>
                 <div className="text-[8px] text-[var(--text-muted)]">at 5%/yr on bond</div>
               </div>
               <div className={`rounded-lg p-3 border ${netBenefit > 0 ? 'bg-[var(--green-dark)] border-[var(--green-border)]' : 'bg-[var(--bg-tertiary)] border-[var(--border)]'}`}>
                 <div className="text-[8px] text-[var(--text-muted)] mb-1">Net benefit</div>
-                <div className={`text-[16px] font-medium ${netBenefit > 0 ? 'text-[var(--green)]' : 'text-[var(--amber)]'}`}>{netBenefit > 0 ? `+$${(netBenefit / 1000).toFixed(0)}k` : netBenefit === 0 ? '$0' : `-$${(Math.abs(netBenefit) / 1000).toFixed(0)}k`}</div>
+                <div className={`text-[16px] font-medium ${netBenefit > 0 ? 'text-[var(--green)]' : 'text-[var(--amber)]'}`}>
+                  {netBenefit > 0 ? `+$${(netBenefit / 1000).toFixed(0)}k` : netBenefit === 0 ? '$0' : `-$${(Math.abs(netBenefit) / 1000).toFixed(0)}k`}
+                </div>
                 <div className="text-[8px] text-[var(--text-muted)]">saved minus cost</div>
               </div>
             </div>
@@ -223,23 +326,34 @@ Be specific. Use the actual site name, dollar figures, and dates. Do not use mar
 
           <div className="bg-[var(--bg-secondary)] border border-[var(--border)] rounded-lg p-4 flex flex-col">
             <div className="flex items-center justify-between mb-3">
-              <div className="text-[10px] font-medium text-[var(--text-primary)]">AI recommendation</div>
+              <div className="text-[10px] font-medium text-[var(--text-primary)]">
+                {isAnalyst ? 'Technical analysis' : 'AI recommendation'}
+              </div>
               <span className="text-[8px] px-1.5 py-0.5 rounded bg-[var(--green-bg)] text-[var(--green)]">Claude AI</span>
             </div>
+
             {!hasAnalysis && !loading && (
               <div className="flex-1 flex flex-col items-center justify-center text-center">
                 <div className="text-[28px] mb-3">◎</div>
-                <div className="text-[10px] text-[var(--text-muted)]">Choose an intervention and conditions, then click "Get Claude AI analysis" for a direct recommendation.</div>
+                <div className="text-[10px] text-[var(--text-muted)]">
+                  {isAnalyst
+                    ? 'Choose an intervention and conditions, then click "Get Claude AI analysis" for a technical breakdown with NDVI values and financial figures.'
+                    : 'Choose an intervention and conditions, then click "Get Claude AI analysis" for a plain-English recommendation.'}
+                </div>
               </div>
             )}
+
             {loading && (
               <div className="flex-1 flex flex-col items-center justify-center text-center">
                 <div className="text-[10px] text-[var(--green)]">Analysing scenario...</div>
               </div>
             )}
+
             {hasAnalysis && analysis && (
               <div className="flex-1 overflow-auto">
-                <div className="text-[10px] text-[var(--text-secondary)] leading-relaxed whitespace-pre-line">{analysis}</div>
+                <div className="flex flex-col">
+                  {renderAnalysis(analysis)}
+                </div>
                 <div className="mt-4 pt-3 border-t border-[var(--border)] text-[8px] text-[var(--text-muted)] italic">
                   Analysis by Claude AI, based on {selectedSite.name} satellite data and WA Mining Act 1978. Not a substitute for professional environmental or financial advice.
                 </div>
