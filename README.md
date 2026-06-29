@@ -68,17 +68,17 @@ The satellite data has always existed. The analytical methods have always existe
 
 **Satellite monitoring.** Vegetation health scores across all zones from January 2019 to June 2026. Anomaly detection against a five-year historical baseline. Zone-level breakdowns per site with notable event overlays.
 
-**AI anomaly alerts.** Three agents work in sequence. The Watcher scans satellite imagery and flags unusual changes. The Analyst searches historical records and Western Australian mining regulation context to classify the cause and severity. The Reporter surfaces findings to the dashboard. A live simulation shows the full process in real time.
+**AI anomaly detection pipeline.** Three agents run in sequence against real NDVI time-series data. The Watcher computes seasonal Z-scores per zone by comparing the latest satellite reading against the same month across the previous six years, and flags any zone that deviates significantly from its historical baseline. The Analyst classifies each flagged zone by cause and severity using rule-based logic covering vegetation failure, slow recovery velocity, and severe seasonal decline, and identifies the regulatory obligation under the Mine Closure Plan. The Reporter logs the findings, updates the bond release forecast, and surfaces alerts to the dashboard. This is real anomaly detection running against real data, not a simulation.
 
-**Ask a question.** Conversational AI powered by Claude (Anthropic). Ask anything about the selected site in plain English or technical mode. Answers are grounded in satellite data, DEMIRS guidelines, and the WA Mining Act 1978.
+**Ask a question.** Conversational AI powered by Claude (Anthropic). Ask anything about the selected site in Executive mode for plain-English answers or Analyst mode for technical responses with vegetation index values and zone-level data. Restricted to mine rehabilitation topics only. Ask about the sources behind any answer and the AI will explain what data it is drawing from.
 
-**Generate report.** Executive and Analyst versions generated simultaneously from the same data. Plain English with financial figures for business leaders. Technical measurements, zone references, and regulatory citations for environmental teams. Downloadable as PDF.
+**Generate report.** Four distinct report types generated simultaneously in Executive and Analyst versions: a formal compliance summary for DEMIRS, an investor update for shareholders and board members, an executive briefing with bullet key findings for senior management, and a technical report for environmental scientists. Switch between versions instantly. Download as PDF.
 
-**Scenario planner.** Model any intervention decision against any external condition. Outputs include projected bond release date, months recovered versus baseline, financing costs saved, and net benefit after intervention cost.
+**Scenario planner.** Model any intervention decision against any external condition in Executive or Analyst mode. Executive mode gives plain-English financial outcomes. Analyst mode gives technical outputs with vegetation health scores and recovery velocity figures. Both use bullet point structure for clarity.
 
 **Bond calculator.** Interactive financial model per site. Current and downside recovery scenarios. Updates automatically when switching sites.
 
-**Compliance tracker.** Portfolio view of all four sites and $186 million in bonds. Recovery rate versus regulatory target, active alerts, and bond release status per site. Portfolio-level compliance report on demand. CSV (spreadsheet) export.
+**Compliance tracker.** Portfolio view of all four sites and $186 million in bonds. Recovery rate versus regulatory target, active alerts, and bond release status per site. Portfolio-level compliance report structured for a board of directors, opening with a portfolio verdict and closing with numbered board actions. CSV export.
 
 **Interactive site map.** Zone boundaries per site with three view modes: recovery status, satellite imagery, and year-on-year change.
 
@@ -86,9 +86,37 @@ The satellite data has always existed. The analytical methods have always existe
 
 ---
 
+## How the anomaly detection works
+
+The agent pipeline uses seasonal Z-score analysis, which is the standard approach in operational vegetation monitoring systems. The method works as follows:
+
+For each monitored zone, the Watcher takes the most recent vegetation health reading and compares it against the same calendar month across all previous years in the dataset. It computes the mean and standard deviation of those historical same-month readings to build a seasonal baseline. The Z-score is then calculated as the deviation of the current reading from that baseline, expressed in units of standard deviation.
+
+A Z-score below -1.5 indicates the zone is meaningfully lower than expected for this time of year, accounting for natural seasonal variation. A score below -2.5 indicates a severe decline. The Analyst then classifies the cause using three failure modes: critical vegetation failure (current health score below 0.10), slow recovery velocity (annual recovery rate below 2%), and severe seasonal decline (Z-score below -2.5).
+
+This approach is more reliable than a simple threshold check because it accounts for the fact that vegetation health naturally varies by season. A reading that looks low in winter may be entirely normal. Comparing against the same month in previous years isolates genuine anomalies from expected seasonal patterns.
+
+In a production system, this pipeline would run automatically every five days triggered by each new Sentinel-2 satellite pass. The current implementation runs against the static NDVI dataset exported from Google Earth Engine. Live satellite ingestion and email delivery would require a Google Earth Engine service account and an email service integration.
+
+---
+
+## Technical decisions worth noting
+
+**Why seasonal Z-score rather than a fixed threshold?** Vegetation health naturally varies by season. A fixed threshold would generate false alerts in winter and miss genuine problems in summer. Comparing each reading against the same month in previous years isolates real anomalies from expected seasonal variation. This is the approach used in operational monitoring systems including those used for food security early warning at continental scale.
+
+**Why rule-based classification in the Analyst rather than a machine learning model?** The dataset has seven years of monthly readings across a small number of zones. That is not enough labelled data to train a reliable classifier. Rule-based logic with interpretable thresholds is more appropriate at this data scale, easier to audit, and produces outputs that can be explained to a regulator. A machine learning approach becomes appropriate once ground-truth labels are available across multiple seasons and sites.
+
+**Why four distinct report types with separate prompts?** A compliance summary for DEMIRS has a completely different structure, tone, and regulatory framing than an investor update for a board. Using the same prompt with a label change produces output that sounds like one but looks like the other. Each report type has its own prompt that specifies the audience, the section structure, the language register, and what to include and exclude.
+
+**Why a guardrail on the Ask AI page?** Without topic restriction, the conversational AI becomes a generic chatbot that happens to know about mine rehabilitation. The guardrail restricts Claude to rehabilitation and regulatory topics only. Attempts to bypass it via prompt injection or claimed permissions are explicitly addressed in the system prompt.
+
+**Why parallel API calls for report generation?** Generating the Executive and Analyst versions sequentially would take twice as long. Both are generated simultaneously via parallel fetch calls and cached on the client. Switching between versions is instant with no additional API cost.
+
+---
+
 ## Stack
 
-React 19, Vite, Tailwind CSS, React Router, Recharts, Leaflet, Claude API (Anthropic), Vercel, Google Earth Engine, Python, Pandas
+React 19, Vite, Tailwind CSS, React Router, Recharts, Leaflet, Claude API (Anthropic), Vercel serverless functions, Google Earth Engine, Python, Pandas
 
 ---
 
@@ -119,3 +147,11 @@ npm run dev
 ```
 
 Open http://localhost:5173
+
+AI features on Vercel route through a serverless function automatically. No local proxy required.
+
+---
+
+## License
+
+MIT
